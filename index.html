@@ -12,7 +12,7 @@
         .section-title { font-size: 1.5rem; color: #666; margin-top: 30px; text-transform: uppercase; letter-spacing: 2px; }
         .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%; max-width: 1000px; margin-top: 20px; }
         .menu-btn { padding: 25px; font-size: 22px; border: none; border-radius: 30px; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 15px rgba(0,0,0,0.1); color: white; font-weight: bold; }
-        .menu-btn:hover { transform: translateY(-3px); }
+        .menu-btn:active { transform: scale(0.95); }
         .btn-paint { background-color: var(--primary); }
         .btn-bounce { background-color: var(--secondary); }
         .btn-piano { background-color: var(--tertiary); color: #333; }
@@ -52,6 +52,22 @@
     let currentMode, animationId, audioCtx, items = [], activeKeys = {}, hue = 0;
     let lastX = null, lastY = null;
 
+    // --- MOBILE AUDIO UNLOCKER ---
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        // Create and play a tiny silent buffer to "prime" the speakers
+        const buffer = audioCtx.createBuffer(1, 1, 22050);
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioCtx.destination);
+        source.start(0);
+    }
+
     function resize() { 
         canvas.width = window.innerWidth; 
         canvas.height = window.innerHeight; 
@@ -68,26 +84,26 @@
 
     function playSound(freq, type = 'sine', duration = 0.4) {
         if (!audioCtx) return;
-        // Resume context if it suspended (common browser behavior)
         if (audioCtx.state === 'suspended') audioCtx.resume();
         
         const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-        o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        o.type = type; 
+        o.frequency.setValueAtTime(freq, audioCtx.currentTime);
         g.gain.setValueAtTime(0, audioCtx.currentTime);
-        g.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.02);
+        g.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
         g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
         o.connect(g); g.connect(audioCtx.destination);
         o.start(); o.stop(audioCtx.currentTime + duration);
     }
 
     function startGame(mode) {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+        initAudio(); // Unlock audio on button click
 
         document.getElementById('hub').style.display = 'none';
         document.getElementById('game-container').style.display = 'block';
         document.getElementById('back-btn').style.display = 'block';
         document.getElementById('clear-btn').style.display = (mode === 'paint') ? 'block' : 'none';
+        
         currentMode = mode;
         lastX = null; lastY = null;
         clearCanvas();
@@ -103,6 +119,7 @@
         document.getElementById('clear-btn').style.display = 'none';
     }
 
+    // --- INPUT HANDLING ---
     canvas.addEventListener('pointermove', (e) => {
         if (currentMode === 'paint') {
             if (lastX === null) { lastX = e.clientX; lastY = e.clientY; return; }
@@ -117,11 +134,11 @@
     });
 
     canvas.addEventListener('pointerdown', (e) => {
+        initAudio(); // Secondary unlock on screen touch
         if (currentMode === 'bubblePop') {
             items.forEach((b, i) => {
                 const dist = Math.hypot(e.clientX - b.x, e.clientY - b.y);
                 if (dist < b.r) {
-                    // SUCCESSFUL POP SOUND
                     playSound(800 + Math.random() * 400, 'sine', 0.1);
                     items.splice(i, 1);
                 }
@@ -130,7 +147,6 @@
         if (currentMode === 'mobilePiano') {
             const keyH = canvas.height / 8;
             const idx = Math.floor(e.clientY / keyH);
-            // SCALE SOUND
             const freq = 261.63 * Math.pow(1.059463, idx * 3);
             playSound(freq, 'sine', 0.5);
             activeKeys[idx] = 10;
