@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Alaina's Game World</title>
     <style>
-        :root { --bg: #fdfcf0; --primary: #ff6b6b; --secondary: #4ecdc4; --tertiary: #ffd93d; --phone: #a29bfe; --safari: #ff9f43; }
+        :root { --bg: #fdfcf0; --primary: #ff6b6b; --secondary: #4ecdc4; --tertiary: #ffd93d; --phone: #a29bfe; --abc: #ff9f43; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; font-family: 'Arial Rounded MT Bold', sans-serif; background-color: var(--bg); }
         canvas { display: block; touch-action: none; background: #fff; }
         #hub { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; min-height: 100vh; box-sizing: border-box; }
@@ -22,19 +22,17 @@
 
     <div id="hub">
         <h1 style="text-align: center; color: #333;">🌟 ALAINA'S WORLD 🌟</h1>
-        
         <p class="section-title">Computer Games</p>
         <div class="game-grid">
-            <button class="menu-btn" style="background:var(--primary)" onclick="startGame('paint')">🎨 Magic Painter</button>
-            <button class="menu-btn" style="background:var(--secondary)" onclick="startGame('bounce')">🎈 Letter Bounce</button>
-            <button class="menu-btn" style="background:var(--tertiary); color:#333" onclick="startGame('piano')">🎹 Desktop Piano</button>
+            <button class="menu-btn btn-paint" onclick="startGame('paint')">🎨 Magic Painter</button>
+            <button class="menu-btn btn-bounce" onclick="startGame('bounce')">🎈 Letter Bounce</button>
+            <button class="menu-btn btn-piano" onclick="startGame('piano')">🎹 Desktop Piano</button>
         </div>
-
         <p class="section-title">Phone & Tablet Games</p>
         <div class="game-grid">
-            <button class="menu-btn" style="background:var(--phone)" onclick="startGame('mobilePiano')">📱 Phone Piano</button>
-            <button class="menu-btn" style="background:var(--phone)" onclick="startGame('bubblePop')">🫧 Bubble Pop</button>
-            <button class="menu-btn" style="background:var(--safari)" onclick="startGame('safari')">🦁 Animal Safari</button>
+            <button class="menu-btn btn-mobile" onclick="startGame('mobilePiano')">📱 Phone Piano</button>
+            <button class="menu-btn btn-mobile" onclick="startGame('bubblePop')">🫧 Bubble Pop</button>
+            <button class="menu-btn btn-abc" onclick="startGame('abc')">🔤 Talking ABC</button>
         </div>
     </div>
 
@@ -47,29 +45,40 @@
     const ctx = canvas.getContext('2d');
     let currentMode, animationId, audioCtx, items = [], activeKeys = {}, hue = 0;
     let lastX = null, lastY = null;
+    let abcIndex = 0, abcState = "letter";
 
-    const animals = [
-        { emoji: '🦁', name: 'LION', freq: 150 },
-        { emoji: '🐘', name: 'ELEPHANT', freq: 100 },
-        { emoji: '🐱', name: 'CAT', freq: 800 },
-        { emoji: '🐶', name: 'DOG', freq: 300 },
-        { emoji: '🐥', name: 'BIRD', freq: 1200 },
-        { emoji: '🐄', name: 'COW', freq: 200 }
+    const abcData = [
+        { l: 'A', w: 'Apple', e: '🍎' }, { l: 'B', w: 'Ball', e: '⚽' }, { l: 'C', w: 'Cat', e: '🐱' },
+        { l: 'D', w: 'Dog', e: '🐶' }, { l: 'E', w: 'Elephant', e: '🐘' }, { l: 'F', w: 'Fish', e: '🐟' },
+        { l: 'G', w: 'Grapes', e: '🍇' }, { l: 'H', w: 'Hat', e: '🎩' }, { l: 'I', w: 'Ice Cream', e: '🍦' },
+        { l: 'J', w: 'Juice', e: '🥤' }, { l: 'K', w: 'Kite', e: '🪁' }, { l: 'L', w: 'Lion', e: '🦁' },
+        { l: 'M', w: 'Monkey', e: '🐵' }, { l: 'N', w: 'Nose', e: '👃' }, { l: 'O', w: 'Orange', e: '🍊' },
+        { l: 'P', w: 'Pig', e: '🐷' }, { l: 'Q', w: 'Queen', e: '👸' }, { l: 'R', w: 'Rabbit', e: '🐰' },
+        { l: 'S', w: 'Sun', e: '☀️' }, { l: 'T', w: 'Tiger', e: '🐯' }, { l: 'U', w: 'Umbrella', e: '☂️' },
+        { l: 'V', w: 'Van', e: '🚐' }, { l: 'W', w: 'Watch', e: '⌚' }, { l: 'X', w: 'Xylophone', e: '🎹' },
+        { l: 'Y', w: 'Yo-Yo', e: '🪀' }, { l: 'Z', w: 'Zebra', e: '🦓' }
     ];
+
+    // --- TALKING FUNCTION ---
+    function speakText(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Stop any current talking
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.pitch = 1.3; // Cheerful higher pitch
+            utterance.rate = 0.9;  // Slightly slower for kids
+            window.speechSynthesis.speak(utterance);
+        }
+    }
 
     function unlockAudio() {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    function playSound(freq, type = 'sine', duration = 0.3) {
+    function playSound(freq, type = 'sine', duration = 0.4) {
         if (!audioCtx) return;
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
         o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        if (type === 'sawtooth') { // For animal-like growls
-            o.frequency.exponentialRampToValueAtTime(freq/2, audioCtx.currentTime + duration);
-        }
         g.gain.setValueAtTime(0, audioCtx.currentTime);
         g.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.02);
         g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
@@ -84,12 +93,14 @@
         document.getElementById('back-btn').style.display = 'block';
         document.getElementById('clear-btn').style.display = (mode === 'paint') ? 'block' : 'none';
         currentMode = mode;
+        abcIndex = 0; abcState = "letter";
         clearCanvas();
         animate();
     }
 
     function goHome() {
         cancelAnimationFrame(animationId);
+        window.speechSynthesis.cancel();
         currentMode = null;
         document.getElementById('hub').style.display = 'flex';
         document.getElementById('game-container').style.display = 'none';
@@ -99,27 +110,26 @@
 
     canvas.addEventListener('pointerdown', (e) => {
         unlockAudio();
-        const touchX = e.clientX, touchY = e.clientY;
-
+        if (currentMode === 'abc' && abcState === "letter") {
+            const data = abcData[abcIndex];
+            abcState = "word";
+            speakText(`${data.l} is for ${data.w}`); // The computer talks!
+            
+            setTimeout(() => {
+                abcIndex = (abcIndex + 1) % abcData.length;
+                abcState = "letter";
+            }, 3000); // 3 seconds to finish speaking and show the image
+        }
         if (currentMode === 'bubblePop') {
             items.forEach((b, i) => {
-                if (Math.hypot(touchX - b.x, touchY - b.y) < b.r) {
-                    playSound(900 + Math.random() * 300, 'sine', 0.1);
+                if (Math.hypot(e.clientX - b.x, e.clientY - b.y) < b.r) {
+                    playSound(800 + Math.random() * 400, 'sine', 0.1);
                     items.splice(i, 1);
                 }
             });
         }
-        if (currentMode === 'safari') {
-            const boxW = canvas.width / 2, boxH = canvas.height / 3;
-            const col = Math.floor(touchX / boxW), row = Math.floor(touchY / boxH);
-            const idx = row * 2 + col;
-            if (animals[idx]) {
-                playSound(animals[idx].freq, animals[idx].freq < 300 ? 'sawtooth' : 'sine', 0.5);
-                activeKeys[idx] = 20;
-            }
-        }
         if (currentMode === 'mobilePiano') {
-            const idx = Math.floor(touchY / (canvas.height / 8));
+            const idx = Math.floor(e.clientY / (canvas.height / 8));
             playSound(261.63 * Math.pow(1.059, idx * 3), 'sine', 0.4);
             activeKeys[idx] = 10;
         }
@@ -137,25 +147,34 @@
     });
 
     function clearCanvas() {
-        ctx.fillStyle = (currentMode === 'piano' || currentMode === 'mobilePiano' || currentMode === 'safari') ? '#000' : '#fff';
+        ctx.fillStyle = (currentMode === 'piano' || currentMode === 'mobilePiano' || currentMode === 'abc') ? '#000' : '#fff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         items = [];
     }
 
     function animate() {
         if (!currentMode) return;
-        if (currentMode === 'safari') {
-            const boxW = canvas.width / 2, boxH = canvas.height / 3;
-            animals.forEach((a, i) => {
-                const x = (i % 2) * boxW, y = Math.floor(i / 2) * boxH;
-                ctx.fillStyle = activeKeys[i] > 0 ? '#444' : '#222';
-                ctx.fillRect(x+5, y+5, boxW-10, boxH-10);
-                ctx.font = "80px Arial"; ctx.textAlign = "center";
-                ctx.fillText(a.emoji, x + boxW/2, y + boxH/2);
-                ctx.font = "20px Arial"; ctx.fillStyle = "white";
-                ctx.fillText(a.name, x + boxW/2, y + boxH - 20);
-                if(activeKeys[i] > 0) activeKeys[i]--;
-            });
+        
+        if (currentMode === 'abc') {
+            ctx.fillStyle = 'black'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            const data = abcData[abcIndex];
+            ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            
+            if (abcState === "letter") {
+                ctx.fillStyle = `hsl(${(abcIndex/26)*360}, 100%, 60%)`;
+                ctx.font = "bold 250px Arial";
+                ctx.fillText(data.l, canvas.width/2, canvas.height/2);
+                ctx.font = "30px Arial"; ctx.fillStyle = "white";
+                ctx.fillText("Tap to hear Alaina!", canvas.width/2, canvas.height - 50);
+            } else {
+                ctx.fillStyle = "white";
+                ctx.font = "bold 80px Arial";
+                ctx.fillText(`${data.l} is for...`, canvas.width/2, canvas.height/2 - 150);
+                ctx.font = "150px Arial";
+                ctx.fillText(data.e, canvas.width/2, canvas.height/2);
+                ctx.font = "bold 100px Arial"; ctx.fillStyle = "#ffd93d";
+                ctx.fillText(data.w, canvas.width/2, canvas.height/2 + 150);
+            }
         }
         else if (currentMode === 'bubblePop') {
             ctx.fillStyle = 'white'; ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -174,14 +193,30 @@
                 if(activeKeys[i] > 0) activeKeys[i]--;
             }
         }
-        // ... (Remaining Logic for Bounce and Desktop Piano same as before)
         else if (currentMode === 'bounce') {
             ctx.fillStyle = 'white'; ctx.fillRect(0,0,canvas.width,canvas.height);
             items.forEach((l) => {
                 l.vy += 0.5; l.y += l.vy; l.x += l.vx;
-                if (l.y + l.size/2 > canvas.height) { l.y = canvas.height-l.size/2; l.vy *= l.bounce; }
+                if (l.y + l.size/2 > canvas.height) { l.y = canvas.height-l.size/2; l.vy *= l.bounce; if(Math.abs(l.vy)>2) playSound(180, 'triangle', 0.1); }
                 if (l.x < 0 || l.x > canvas.width) l.vx *= -1;
                 ctx.fillStyle = `hsl(${l.hue}, 100%, 50%)`; ctx.font = `bold ${l.size}px Arial`; ctx.textAlign = "center"; ctx.fillText(l.char, l.x, l.y);
+            });
+        }
+        else if (currentMode === 'piano') {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const kw = canvas.width / 26;
+            for (let i = 0; i < 26; i++) {
+                const c = String.fromCharCode(65 + i), isD = activeKeys[c] > 0;
+                ctx.fillStyle = isD ? `hsl(${(i/26)*360}, 100%, 50%)` : "#222";
+                ctx.fillRect(i*kw, canvas.height-120, kw-2, 120);
+                ctx.fillStyle = isD ? "white" : "#777"; ctx.font = "bold 14px Arial"; ctx.textAlign = "center"; ctx.fillText(c, i*kw + kw/2, canvas.height - 20);
+                if (isD) activeKeys[c]--;
+            }
+            items.forEach((p, i) => {
+                p.y += p.vy; p.x += p.vx; p.vy += 0.2; p.life -= 0.01; p.rot += 0.1;
+                if (p.life <= 0) items.splice(i, 1);
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+                ctx.fillStyle = `hsla(${p.h}, 100%, 60%, ${p.life})`; ctx.font = "bold 80px Arial"; ctx.fillText(p.char, 0, 0); ctx.restore();
             });
         }
         animationId = requestAnimationFrame(animate);
