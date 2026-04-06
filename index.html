@@ -317,7 +317,15 @@
         animate();
 
         // Fix #3: kick off ABC auto-cycle
-        if (m === 'abc') abcTimer = setTimeout(abcShowWord, 2000);
+        // Speak a silent utterance NOW (inside the user gesture) to unlock speechSynthesis
+        // so timer-fired speak() calls aren't blocked by the browser
+        if (m === 'abc') {
+            const unlock = new SpeechSynthesisUtterance(' ');
+            unlock.volume = 0;
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(unlock);
+            abcTimer = setTimeout(abcShowWord, 2000);
+        }
     }
 
     function goHome() {
