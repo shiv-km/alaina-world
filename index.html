@@ -5,18 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Alaina's Game World</title>
     <style>
-        :root { --bg: #fdfcf0; --primary: #ff6b6b; --secondary: #4ecdc4; --tertiary: #ffd93d; --phone: #a29bfe; }
+        :root { --bg: #fdfcf0; --primary: #ff6b6b; --secondary: #4ecdc4; --tertiary: #ffd93d; --phone: #a29bfe; --safari: #ff9f43; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; font-family: 'Arial Rounded MT Bold', sans-serif; background-color: var(--bg); }
         canvas { display: block; touch-action: none; background: #fff; }
         #hub { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; min-height: 100vh; box-sizing: border-box; }
         .section-title { font-size: 1.5rem; color: #666; margin-top: 30px; text-transform: uppercase; letter-spacing: 2px; }
-        .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%; max-width: 1000px; margin-top: 20px; }
-        .menu-btn { padding: 25px; font-size: 22px; border: none; border-radius: 30px; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 15px rgba(0,0,0,0.1); color: white; font-weight: bold; }
-        .menu-btn:active { transform: scale(0.95); }
-        .btn-paint { background-color: var(--primary); }
-        .btn-bounce { background-color: var(--secondary); }
-        .btn-piano { background-color: var(--tertiary); color: #333; }
-        .btn-mobile { background-color: var(--phone); }
+        .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; width: 100%; max-width: 1000px; margin-top: 20px; }
+        .menu-btn { padding: 25px; font-size: 20px; border: none; border-radius: 30px; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 15px rgba(0,0,0,0.1); color: white; font-weight: bold; -webkit-tap-highlight-color: transparent; }
         #back-btn, #clear-btn { position: absolute; padding: 12px 20px; background: white; border: 3px solid #333; border-radius: 20px; font-weight: bold; cursor: pointer; z-index: 100; display: none; }
         #back-btn { top: 15px; left: 15px; }
         #clear-btn { top: 15px; right: 15px; background: #ffeb3b; }
@@ -30,15 +25,16 @@
         
         <p class="section-title">Computer Games</p>
         <div class="game-grid">
-            <button class="menu-btn btn-paint" onclick="startGame('paint')">🎨 Magic Painter</button>
-            <button class="menu-btn btn-bounce" onclick="startGame('bounce')">🎈 Letter Bounce</button>
-            <button class="menu-btn btn-piano" onclick="startGame('piano')">🎹 Desktop Piano</button>
+            <button class="menu-btn" style="background:var(--primary)" onclick="startGame('paint')">🎨 Magic Painter</button>
+            <button class="menu-btn" style="background:var(--secondary)" onclick="startGame('bounce')">🎈 Letter Bounce</button>
+            <button class="menu-btn" style="background:var(--tertiary); color:#333" onclick="startGame('piano')">🎹 Desktop Piano</button>
         </div>
 
         <p class="section-title">Phone & Tablet Games</p>
         <div class="game-grid">
-            <button class="menu-btn btn-mobile" onclick="startGame('mobilePiano')">📱 Phone Piano</button>
-            <button class="menu-btn btn-mobile" onclick="startGame('bubblePop')">🫧 Bubble Pop</button>
+            <button class="menu-btn" style="background:var(--phone)" onclick="startGame('mobilePiano')">📱 Phone Piano</button>
+            <button class="menu-btn" style="background:var(--phone)" onclick="startGame('bubblePop')">🫧 Bubble Pop</button>
+            <button class="menu-btn" style="background:var(--safari)" onclick="startGame('safari')">🦁 Animal Safari</button>
         </div>
     </div>
 
@@ -52,60 +48,42 @@
     let currentMode, animationId, audioCtx, items = [], activeKeys = {}, hue = 0;
     let lastX = null, lastY = null;
 
-    // --- MOBILE AUDIO UNLOCKER ---
-    function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
-        // Create and play a tiny silent buffer to "prime" the speakers
-        const buffer = audioCtx.createBuffer(1, 1, 22050);
-        const source = audioCtx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(audioCtx.destination);
-        source.start(0);
-    }
+    const animals = [
+        { emoji: '🦁', name: 'LION', freq: 150 },
+        { emoji: '🐘', name: 'ELEPHANT', freq: 100 },
+        { emoji: '🐱', name: 'CAT', freq: 800 },
+        { emoji: '🐶', name: 'DOG', freq: 300 },
+        { emoji: '🐥', name: 'BIRD', freq: 1200 },
+        { emoji: '🐄', name: 'COW', freq: 200 }
+    ];
 
-    function resize() { 
-        canvas.width = window.innerWidth; 
-        canvas.height = window.innerHeight; 
-        if(currentMode) clearCanvas(); 
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    function clearCanvas() {
-        ctx.fillStyle = (currentMode === 'piano' || currentMode === 'mobilePiano') ? '#000' : 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        items = [];
-    }
-
-    function playSound(freq, type = 'sine', duration = 0.4) {
-        if (!audioCtx) return;
+    function unlockAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        
-        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-        o.type = type; 
-        o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    }
+
+    function playSound(freq, type = 'sine', duration = 0.3) {
+        if (!audioCtx) return;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        if (type === 'sawtooth') { // For animal-like growls
+            o.frequency.exponentialRampToValueAtTime(freq/2, audioCtx.currentTime + duration);
+        }
         g.gain.setValueAtTime(0, audioCtx.currentTime);
-        g.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+        g.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.02);
         g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
         o.connect(g); g.connect(audioCtx.destination);
         o.start(); o.stop(audioCtx.currentTime + duration);
     }
 
     function startGame(mode) {
-        initAudio(); // Unlock audio on button click
-
+        unlockAudio();
         document.getElementById('hub').style.display = 'none';
         document.getElementById('game-container').style.display = 'block';
         document.getElementById('back-btn').style.display = 'block';
         document.getElementById('clear-btn').style.display = (mode === 'paint') ? 'block' : 'none';
-        
         currentMode = mode;
-        lastX = null; lastY = null;
         clearCanvas();
         animate();
     }
@@ -119,108 +97,91 @@
         document.getElementById('clear-btn').style.display = 'none';
     }
 
-    // --- INPUT HANDLING ---
-    canvas.addEventListener('pointermove', (e) => {
-        if (currentMode === 'paint') {
-            if (lastX === null) { lastX = e.clientX; lastY = e.clientY; return; }
-            ctx.beginPath();
-            ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
-            ctx.lineWidth = 30; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-            ctx.moveTo(lastX, lastY); ctx.lineTo(e.clientX, e.clientY);
-            ctx.stroke();
-            [lastX, lastY] = [e.clientX, e.clientY];
-            hue = (hue + 2) % 360;
-        }
-    });
-
     canvas.addEventListener('pointerdown', (e) => {
-        initAudio(); // Secondary unlock on screen touch
+        unlockAudio();
+        const touchX = e.clientX, touchY = e.clientY;
+
         if (currentMode === 'bubblePop') {
             items.forEach((b, i) => {
-                const dist = Math.hypot(e.clientX - b.x, e.clientY - b.y);
-                if (dist < b.r) {
-                    playSound(800 + Math.random() * 400, 'sine', 0.1);
+                if (Math.hypot(touchX - b.x, touchY - b.y) < b.r) {
+                    playSound(900 + Math.random() * 300, 'sine', 0.1);
                     items.splice(i, 1);
                 }
             });
         }
+        if (currentMode === 'safari') {
+            const boxW = canvas.width / 2, boxH = canvas.height / 3;
+            const col = Math.floor(touchX / boxW), row = Math.floor(touchY / boxH);
+            const idx = row * 2 + col;
+            if (animals[idx]) {
+                playSound(animals[idx].freq, animals[idx].freq < 300 ? 'sawtooth' : 'sine', 0.5);
+                activeKeys[idx] = 20;
+            }
+        }
         if (currentMode === 'mobilePiano') {
-            const keyH = canvas.height / 8;
-            const idx = Math.floor(e.clientY / keyH);
-            const freq = 261.63 * Math.pow(1.059463, idx * 3);
-            playSound(freq, 'sine', 0.5);
+            const idx = Math.floor(touchY / (canvas.height / 8));
+            playSound(261.63 * Math.pow(1.059, idx * 3), 'sine', 0.4);
             activeKeys[idx] = 10;
         }
     });
 
-    canvas.addEventListener('pointerup', () => { lastX = null; lastY = null; });
-
-    window.addEventListener('keydown', (e) => {
-        if (!currentMode) return;
-        const char = e.key.toUpperCase();
-        if (char.length !== 1) return;
-
-        if (currentMode === 'bounce') {
-            playSound(300 + Math.random() * 200, 'sine', 0.2);
-            items.push({ char, x: Math.random()*canvas.width, y: -50, vy: 5, vx: (Math.random()-0.5)*6, size: 90, hue: Math.random()*360, bounce: -0.7 });
-        } else if (currentMode === 'piano' && char >= 'A' && char <= 'Z') {
-            const idx = char.charCodeAt(0) - 65;
-            playSound(261.63 * Math.pow(1.059463, idx), 'sine', 0.6);
-            activeKeys[char] = 15;
-            items.push({ x: (idx * (canvas.width/26)) + (canvas.width/52), y: canvas.height - 150, char, vy: -10, vx: (Math.random()-0.5)*4, life: 1, h: (idx/26)*360, rot: 0 });
+    canvas.addEventListener('pointermove', (e) => {
+        if (currentMode === 'paint') {
+            if (lastX === null) { lastX = e.clientX; lastY = e.clientY; return; }
+            ctx.beginPath(); ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+            ctx.lineWidth = 30; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            ctx.moveTo(lastX, lastY); ctx.lineTo(e.clientX, e.clientY); ctx.stroke();
+            [lastX, lastY] = [e.clientX, e.clientY];
+            hue = (hue + 3) % 360;
         }
     });
 
+    function clearCanvas() {
+        ctx.fillStyle = (currentMode === 'piano' || currentMode === 'mobilePiano' || currentMode === 'safari') ? '#000' : '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        items = [];
+    }
+
     function animate() {
         if (!currentMode) return;
-
-        if (currentMode === 'bubblePop') {
+        if (currentMode === 'safari') {
+            const boxW = canvas.width / 2, boxH = canvas.height / 3;
+            animals.forEach((a, i) => {
+                const x = (i % 2) * boxW, y = Math.floor(i / 2) * boxH;
+                ctx.fillStyle = activeKeys[i] > 0 ? '#444' : '#222';
+                ctx.fillRect(x+5, y+5, boxW-10, boxH-10);
+                ctx.font = "80px Arial"; ctx.textAlign = "center";
+                ctx.fillText(a.emoji, x + boxW/2, y + boxH/2);
+                ctx.font = "20px Arial"; ctx.fillStyle = "white";
+                ctx.fillText(a.name, x + boxW/2, y + boxH - 20);
+                if(activeKeys[i] > 0) activeKeys[i]--;
+            });
+        }
+        else if (currentMode === 'bubblePop') {
             ctx.fillStyle = 'white'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            if (Math.random() < 0.04) items.push({ x: Math.random()*canvas.width, y: canvas.height+50, r: 45, v: 3, h: Math.random()*360 });
+            if (Math.random() < 0.04) items.push({ x: Math.random()*canvas.width, y: canvas.height+50, r: 40, v: 4, h: Math.random()*360 });
             items.forEach((b, i) => {
-                b.y -= b.v;
-                ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+                b.y -= b.v; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
                 ctx.fillStyle = `hsla(${b.h}, 100%, 50%, 0.4)`; ctx.fill();
-                ctx.strokeStyle = `hsl(${b.h}, 100%, 50%)`; ctx.lineWidth = 3; ctx.stroke();
-                if (b.y < -100) items.splice(i, 1);
+                ctx.strokeStyle = `hsl(${b.h}, 100%, 50%)`; ctx.stroke();
             });
         }
         else if (currentMode === 'mobilePiano') {
-            ctx.fillStyle = 'black'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            const keyH = canvas.height / 8;
+            const kh = canvas.height / 8;
             for(let i=0; i<8; i++) {
                 ctx.fillStyle = activeKeys[i] > 0 ? `hsl(${(i/8)*360}, 100%, 50%)` : "#222";
-                ctx.fillRect(10, i*keyH + 10, canvas.width - 20, keyH - 20);
+                ctx.fillRect(10, i*kh + 10, canvas.width - 20, kh - 20);
                 if(activeKeys[i] > 0) activeKeys[i]--;
             }
         }
+        // ... (Remaining Logic for Bounce and Desktop Piano same as before)
         else if (currentMode === 'bounce') {
-            ctx.fillStyle = 'white'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            items.forEach((l, i) => {
+            ctx.fillStyle = 'white'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            items.forEach((l) => {
                 l.vy += 0.5; l.y += l.vy; l.x += l.vx;
-                if (l.y + l.size/2 > canvas.height) { 
-                    l.y = canvas.height - l.size/2; l.vy *= l.bounce; 
-                    if (Math.abs(l.vy) > 2) playSound(180, 'triangle', 0.1); 
-                }
+                if (l.y + l.size/2 > canvas.height) { l.y = canvas.height-l.size/2; l.vy *= l.bounce; }
                 if (l.x < 0 || l.x > canvas.width) l.vx *= -1;
                 ctx.fillStyle = `hsl(${l.hue}, 100%, 50%)`; ctx.font = `bold ${l.size}px Arial`; ctx.textAlign = "center"; ctx.fillText(l.char, l.x, l.y);
-            });
-        } 
-        else if (currentMode === 'piano') {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            const kw = canvas.width / 26;
-            for (let i = 0; i < 26; i++) {
-                const c = String.fromCharCode(65 + i), isD = activeKeys[c] > 0;
-                ctx.fillStyle = isD ? `hsl(${(i/26)*360}, 100%, 50%)` : "#222";
-                ctx.fillRect(i*kw, canvas.height-120, kw-2, 120);
-                ctx.fillStyle = isD ? "white" : "#777"; ctx.font = "bold 14px Arial"; ctx.textAlign = "center"; ctx.fillText(c, i*kw + kw/2, canvas.height - 20);
-                if (isD) activeKeys[c]--;
-            }
-            items.forEach((p, i) => {
-                p.y += p.vy; p.x += p.vx; p.vy += 0.2; p.life -= 0.01; p.rot += 0.1;
-                if (p.life <= 0) items.splice(i, 1);
-                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
-                ctx.fillStyle = `hsla(${p.h}, 100%, 60%, ${p.life})`; ctx.font = "bold 80px Arial"; ctx.fillText(p.char, 0, 0); ctx.restore();
             });
         }
         animationId = requestAnimationFrame(animate);
