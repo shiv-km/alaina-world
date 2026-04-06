@@ -7,24 +7,16 @@
     <style>
         :root { --bg: #fdfcf0; --primary: #ff6b6b; --secondary: #4ecdc4; --tertiary: #ffd93d; --phone: #a29bfe; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; font-family: 'Arial Rounded MT Bold', sans-serif; background-color: var(--bg); }
-        
         canvas { display: block; touch-action: none; background: #fff; }
-
-        /* --- HUB MENU LAYOUT --- */
         #hub { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; min-height: 100vh; box-sizing: border-box; }
         .section-title { font-size: 1.5rem; color: #666; margin-top: 30px; text-transform: uppercase; letter-spacing: 2px; }
-        
         .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%; max-width: 1000px; margin-top: 20px; }
-
         .menu-btn { padding: 25px; font-size: 22px; border: none; border-radius: 30px; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 15px rgba(0,0,0,0.1); color: white; font-weight: bold; }
         .menu-btn:hover { transform: translateY(-3px); }
-        
         .btn-paint { background-color: var(--primary); }
         .btn-bounce { background-color: var(--secondary); }
         .btn-piano { background-color: var(--tertiary); color: #333; }
         .btn-mobile { background-color: var(--phone); }
-
-        /* --- UI OVERLAYS --- */
         #back-btn, #clear-btn { position: absolute; padding: 12px 20px; background: white; border: 3px solid #333; border-radius: 20px; font-weight: bold; cursor: pointer; z-index: 100; display: none; }
         #back-btn { top: 15px; left: 15px; }
         #clear-btn { top: 15px; right: 15px; background: #ffeb3b; }
@@ -34,7 +26,7 @@
 <body>
 
     <div id="hub">
-        <h1 style="text-align: center; color: #333; margin-bottom: 5px;">🌟 ALAINA'S WORLD 🌟</h1>
+        <h1 style="text-align: center; color: #333;">🌟 ALAINA'S WORLD 🌟</h1>
         
         <p class="section-title">Computer Games</p>
         <div class="game-grid">
@@ -52,7 +44,6 @@
 
     <button id="back-btn" onclick="goHome()">🏠 Menu</button>
     <button id="clear-btn" onclick="clearCanvas()">🧹 Clear</button>
-    
     <div id="game-container"><canvas id="mainCanvas"></canvas></div>
 
 <script>
@@ -75,12 +66,15 @@
         items = [];
     }
 
-    function playSound(freq, type = 'sine', duration = 0.5) {
+    function playSound(freq, type = 'sine', duration = 0.4) {
         if (!audioCtx) return;
+        // Resume context if it suspended (common browser behavior)
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
         const o = audioCtx.createOscillator(), g = audioCtx.createGain();
         o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
         g.gain.setValueAtTime(0, audioCtx.currentTime);
-        g.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+        g.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.02);
         g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
         o.connect(g); g.connect(audioCtx.destination);
         o.start(); o.stop(audioCtx.currentTime + duration);
@@ -88,6 +82,8 @@
 
     function startGame(mode) {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
         document.getElementById('hub').style.display = 'none';
         document.getElementById('game-container').style.display = 'block';
         document.getElementById('back-btn').style.display = 'block';
@@ -107,7 +103,6 @@
         document.getElementById('clear-btn').style.display = 'none';
     }
 
-    // --- SHARED TOUCH/POINTER INPUT ---
     canvas.addEventListener('pointermove', (e) => {
         if (currentMode === 'paint') {
             if (lastX === null) { lastX = e.clientX; lastY = e.clientY; return; }
@@ -126,7 +121,8 @@
             items.forEach((b, i) => {
                 const dist = Math.hypot(e.clientX - b.x, e.clientY - b.y);
                 if (dist < b.r) {
-                    playSound(600 + Math.random() * 400, 'sine', 0.1);
+                    // SUCCESSFUL POP SOUND
+                    playSound(800 + Math.random() * 400, 'sine', 0.1);
                     items.splice(i, 1);
                 }
             });
@@ -134,7 +130,8 @@
         if (currentMode === 'mobilePiano') {
             const keyH = canvas.height / 8;
             const idx = Math.floor(e.clientY / keyH);
-            const freq = 261.63 * Math.pow(1.059463, idx * 2);
+            // SCALE SOUND
+            const freq = 261.63 * Math.pow(1.059463, idx * 3);
             playSound(freq, 'sine', 0.5);
             activeKeys[idx] = 10;
         }
@@ -142,7 +139,6 @@
 
     canvas.addEventListener('pointerup', () => { lastX = null; lastY = null; });
 
-    // --- KEYBOARD INPUT ---
     window.addEventListener('keydown', (e) => {
         if (!currentMode) return;
         const char = e.key.toUpperCase();
@@ -164,12 +160,12 @@
 
         if (currentMode === 'bubblePop') {
             ctx.fillStyle = 'white'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            if (Math.random() < 0.03) items.push({ x: Math.random()*canvas.width, y: canvas.height+50, r: 40+Math.random()*40, v: 2+Math.random()*3, h: Math.random()*360 });
+            if (Math.random() < 0.04) items.push({ x: Math.random()*canvas.width, y: canvas.height+50, r: 45, v: 3, h: Math.random()*360 });
             items.forEach((b, i) => {
                 b.y -= b.v;
                 ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
-                ctx.fillStyle = `hsla(${b.h}, 100%, 50%, 0.3)`; ctx.fill();
-                ctx.strokeStyle = `hsl(${b.h}, 100%, 50%)`; ctx.stroke();
+                ctx.fillStyle = `hsla(${b.h}, 100%, 50%, 0.4)`; ctx.fill();
+                ctx.strokeStyle = `hsl(${b.h}, 100%, 50%)`; ctx.lineWidth = 3; ctx.stroke();
                 if (b.y < -100) items.splice(i, 1);
             });
         }
@@ -178,7 +174,7 @@
             const keyH = canvas.height / 8;
             for(let i=0; i<8; i++) {
                 ctx.fillStyle = activeKeys[i] > 0 ? `hsl(${(i/8)*360}, 100%, 50%)` : "#222";
-                ctx.fillRect(5, i*keyH + 5, canvas.width - 10, keyH - 10);
+                ctx.fillRect(10, i*keyH + 10, canvas.width - 20, keyH - 20);
                 if(activeKeys[i] > 0) activeKeys[i]--;
             }
         }
@@ -186,7 +182,10 @@
             ctx.fillStyle = 'white'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             items.forEach((l, i) => {
                 l.vy += 0.5; l.y += l.vy; l.x += l.vx;
-                if (l.y + l.size/2 > canvas.height) { l.y = canvas.height - l.size/2; l.vy *= l.bounce; if (Math.abs(l.vy) > 2) playSound(150, 'triangle', 0.1); }
+                if (l.y + l.size/2 > canvas.height) { 
+                    l.y = canvas.height - l.size/2; l.vy *= l.bounce; 
+                    if (Math.abs(l.vy) > 2) playSound(180, 'triangle', 0.1); 
+                }
                 if (l.x < 0 || l.x > canvas.width) l.vx *= -1;
                 ctx.fillStyle = `hsl(${l.hue}, 100%, 50%)`; ctx.font = `bold ${l.size}px Arial`; ctx.textAlign = "center"; ctx.fillText(l.char, l.x, l.y);
             });
