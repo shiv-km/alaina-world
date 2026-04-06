@@ -5,32 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Alaina's Game World</title>
     <style>
-        :root { --bg: #fdfcf0; --primary: #ff6b6b; --secondary: #4ecdc4; --tertiary: #ffd93d; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Arial Rounded MT Bold', sans-serif; background-color: var(--bg); }
+        :root { --bg: #fdfcf0; --primary: #ff6b6b; --secondary: #4ecdc4; --tertiary: #ffd93d; --phone: #a29bfe; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; font-family: 'Arial Rounded MT Bold', sans-serif; background-color: var(--bg); }
         
-        /* Critical for touchpad: stops the browser from "grabbing" the touch */
         canvas { display: block; touch-action: none; background: #fff; }
 
-        #hub { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 25px; }
-        .menu-btn { width: 320px; padding: 30px; font-size: 28px; border: none; border-radius: 60px; cursor: pointer; transition: all 0.2s; box-shadow: 0 10px 20px rgba(0,0,0,0.1); color: white; font-weight: bold; }
+        /* --- HUB MENU LAYOUT --- */
+        #hub { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; min-height: 100vh; box-sizing: border-box; }
+        .section-title { font-size: 1.5rem; color: #666; margin-top: 30px; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%; max-width: 1000px; margin-top: 20px; }
+
+        .menu-btn { padding: 25px; font-size: 22px; border: none; border-radius: 30px; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 15px rgba(0,0,0,0.1); color: white; font-weight: bold; }
+        .menu-btn:hover { transform: translateY(-3px); }
+        
         .btn-paint { background-color: var(--primary); }
         .btn-bounce { background-color: var(--secondary); }
         .btn-piano { background-color: var(--tertiary); color: #333; }
-        
-        #back-btn, #clear-btn { position: absolute; padding: 15px 25px; background: white; border: 3px solid #333; border-radius: 30px; font-weight: bold; cursor: pointer; z-index: 100; display: none; }
-        #back-btn { top: 20px; left: 20px; }
-        #clear-btn { top: 20px; right: 20px; background: #ffeb3b; }
-        
+        .btn-mobile { background-color: var(--phone); }
+
+        /* --- UI OVERLAYS --- */
+        #back-btn, #clear-btn { position: absolute; padding: 12px 20px; background: white; border: 3px solid #333; border-radius: 20px; font-weight: bold; cursor: pointer; z-index: 100; display: none; }
+        #back-btn { top: 15px; left: 15px; }
+        #clear-btn { top: 15px; right: 15px; background: #ffeb3b; }
         #game-container { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     </style>
 </head>
 <body>
 
     <div id="hub">
-        <h1 style="font-size: 3.5rem; color: #333;">🌟 ALAINA'S WORLD 🌟</h1>
-        <button class="menu-btn btn-paint" onclick="startGame('paint')">🎨 Magic Painter</button>
-        <button class="menu-btn btn-bounce" onclick="startGame('bounce')">🎈 Letter Bounce</button>
-        <button class="menu-btn btn-piano" onclick="startGame('piano')">🎹 Super Piano</button>
+        <h1 style="text-align: center; color: #333; margin-bottom: 5px;">🌟 ALAINA'S WORLD 🌟</h1>
+        
+        <p class="section-title">Computer Games</p>
+        <div class="game-grid">
+            <button class="menu-btn btn-paint" onclick="startGame('paint')">🎨 Magic Painter</button>
+            <button class="menu-btn btn-bounce" onclick="startGame('bounce')">🎈 Letter Bounce</button>
+            <button class="menu-btn btn-piano" onclick="startGame('piano')">🎹 Desktop Piano</button>
+        </div>
+
+        <p class="section-title">Phone & Tablet Games</p>
+        <div class="game-grid">
+            <button class="menu-btn btn-mobile" onclick="startGame('mobilePiano')">📱 Phone Piano</button>
+            <button class="menu-btn btn-mobile" onclick="startGame('bubblePop')">🫧 Bubble Pop</button>
+        </div>
     </div>
 
     <button id="back-btn" onclick="goHome()">🏠 Menu</button>
@@ -47,13 +64,13 @@
     function resize() { 
         canvas.width = window.innerWidth; 
         canvas.height = window.innerHeight; 
-        if(currentMode === 'paint') clearCanvas(); 
+        if(currentMode) clearCanvas(); 
     }
     window.addEventListener('resize', resize);
     resize();
 
     function clearCanvas() {
-        ctx.fillStyle = currentMode === 'piano' ? '#000' : 'white';
+        ctx.fillStyle = (currentMode === 'piano' || currentMode === 'mobilePiano') ? '#000' : 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         items = [];
     }
@@ -70,18 +87,13 @@
     }
 
     function startGame(mode) {
-        // We only try to start Audio for the musical games
-        if (mode !== 'paint') {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         document.getElementById('hub').style.display = 'none';
         document.getElementById('game-container').style.display = 'block';
         document.getElementById('back-btn').style.display = 'block';
         document.getElementById('clear-btn').style.display = (mode === 'paint') ? 'block' : 'none';
-        
         currentMode = mode;
-        lastX = null; lastY = null; // Reset painter position
+        lastX = null; lastY = null;
         clearCanvas();
         animate();
     }
@@ -95,35 +107,42 @@
         document.getElementById('clear-btn').style.display = 'none';
     }
 
-    // --- UPDATED PAINTER LOGIC: NO CLICK REQUIRED ---
+    // --- SHARED TOUCH/POINTER INPUT ---
     canvas.addEventListener('pointermove', (e) => {
-        if (currentMode !== 'paint') return;
-        
-        // If it's the first touch or we just moved back to the canvas
-        if (lastX === null) {
-            lastX = e.clientX;
-            lastY = e.clientY;
-            return;
+        if (currentMode === 'paint') {
+            if (lastX === null) { lastX = e.clientX; lastY = e.clientY; return; }
+            ctx.beginPath();
+            ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+            ctx.lineWidth = 30; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            ctx.moveTo(lastX, lastY); ctx.lineTo(e.clientX, e.clientY);
+            ctx.stroke();
+            [lastX, lastY] = [e.clientX, e.clientY];
+            hue = (hue + 2) % 360;
         }
-
-        ctx.beginPath();
-        ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
-        ctx.lineWidth = 30; // Nice thick line for Alaina
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(e.clientX, e.clientY);
-        ctx.stroke();
-        
-        [lastX, lastY] = [e.clientX, e.clientY];
-        hue = (hue + 2) % 360;
     });
 
-    // Reset lastX/Y when she lifts her finger so lines don't "snap" across the screen
-    canvas.addEventListener('pointerleave', () => { lastX = null; lastY = null; });
+    canvas.addEventListener('pointerdown', (e) => {
+        if (currentMode === 'bubblePop') {
+            items.forEach((b, i) => {
+                const dist = Math.hypot(e.clientX - b.x, e.clientY - b.y);
+                if (dist < b.r) {
+                    playSound(600 + Math.random() * 400, 'sine', 0.1);
+                    items.splice(i, 1);
+                }
+            });
+        }
+        if (currentMode === 'mobilePiano') {
+            const keyH = canvas.height / 8;
+            const idx = Math.floor(e.clientY / keyH);
+            const freq = 261.63 * Math.pow(1.059463, idx * 2);
+            playSound(freq, 'sine', 0.5);
+            activeKeys[idx] = 10;
+        }
+    });
+
     canvas.addEventListener('pointerup', () => { lastX = null; lastY = null; });
 
-    // --- KEYBOARD LOGIC ---
+    // --- KEYBOARD INPUT ---
     window.addEventListener('keydown', (e) => {
         if (!currentMode) return;
         const char = e.key.toUpperCase();
@@ -143,7 +162,27 @@
     function animate() {
         if (!currentMode) return;
 
-        if (currentMode === 'bounce') {
+        if (currentMode === 'bubblePop') {
+            ctx.fillStyle = 'white'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            if (Math.random() < 0.03) items.push({ x: Math.random()*canvas.width, y: canvas.height+50, r: 40+Math.random()*40, v: 2+Math.random()*3, h: Math.random()*360 });
+            items.forEach((b, i) => {
+                b.y -= b.v;
+                ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+                ctx.fillStyle = `hsla(${b.h}, 100%, 50%, 0.3)`; ctx.fill();
+                ctx.strokeStyle = `hsl(${b.h}, 100%, 50%)`; ctx.stroke();
+                if (b.y < -100) items.splice(i, 1);
+            });
+        }
+        else if (currentMode === 'mobilePiano') {
+            ctx.fillStyle = 'black'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            const keyH = canvas.height / 8;
+            for(let i=0; i<8; i++) {
+                ctx.fillStyle = activeKeys[i] > 0 ? `hsl(${(i/8)*360}, 100%, 50%)` : "#222";
+                ctx.fillRect(5, i*keyH + 5, canvas.width - 10, keyH - 10);
+                if(activeKeys[i] > 0) activeKeys[i]--;
+            }
+        }
+        else if (currentMode === 'bounce') {
             ctx.fillStyle = 'white'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             items.forEach((l, i) => {
                 l.vy += 0.5; l.y += l.vy; l.x += l.vx;
@@ -151,14 +190,15 @@
                 if (l.x < 0 || l.x > canvas.width) l.vx *= -1;
                 ctx.fillStyle = `hsl(${l.hue}, 100%, 50%)`; ctx.font = `bold ${l.size}px Arial`; ctx.textAlign = "center"; ctx.fillText(l.char, l.x, l.y);
             });
-        } else if (currentMode === 'piano') {
+        } 
+        else if (currentMode === 'piano') {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             const kw = canvas.width / 26;
             for (let i = 0; i < 26; i++) {
                 const c = String.fromCharCode(65 + i), isD = activeKeys[c] > 0;
                 ctx.fillStyle = isD ? `hsl(${(i/26)*360}, 100%, 50%)` : "#222";
                 ctx.fillRect(i*kw, canvas.height-120, kw-2, 120);
-                ctx.fillStyle = isD ? "white" : "#777"; ctx.font = "bold 18px Arial"; ctx.textAlign = "center"; ctx.fillText(c, i*kw + kw/2, canvas.height - 20);
+                ctx.fillStyle = isD ? "white" : "#777"; ctx.font = "bold 14px Arial"; ctx.textAlign = "center"; ctx.fillText(c, i*kw + kw/2, canvas.height - 20);
                 if (isD) activeKeys[c]--;
             }
             items.forEach((p, i) => {
