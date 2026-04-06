@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alaina's Game World</title>
+    <style>
+        :root { --bg: #fdfcf0; --primary: #ff6b6b; --secondary: #4ecdc4; --tertiary: #ffd93d; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Arial Rounded MT Bold', sans-serif; background-color: var(--bg); }
+        
+        /* Critical for touchpad: stops the browser from "grabbing" the touch */
+        canvas { display: block; touch-action: none; background: #fff; }
+
+        #hub { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 25px; }
+        .menu-btn { width: 320px; padding: 30px; font-size: 28px; border: none; border-radius: 60px; cursor: pointer; transition: all 0.2s; box-shadow: 0 10px 20px rgba(0,0,0,0.1); color: white; font-weight: bold; }
+        .btn-paint { background-color: var(--primary); }
+        .btn-bounce { background-color: var(--secondary); }
+        .btn-piano { background-color: var(--tertiary); color: #333; }
+        
+        #back-btn, #clear-btn { position: absolute; padding: 15px 25px; background: white; border: 3px solid #333; border-radius: 30px; font-weight: bold; cursor: pointer; z-index: 100; display: none; }
+        #back-btn { top: 20px; left: 20px; }
+        #clear-btn { top: 20px; right: 20px; background: #ffeb3b; }
+        
+        #game-container { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+
+    <div id="hub">
+        <h1 style="font-size: 3.5rem; color: #333;">🌟 ALAINA'S WORLD 🌟</h1>
+        <button class="menu-btn btn-paint" onclick="startGame('paint')">🎨 Magic Painter</button>
+        <button class="menu-btn btn-bounce" onclick="startGame('bounce')">🎈 Letter Bounce</button>
+        <button class="menu-btn btn-piano" onclick="startGame('piano')">🎹 Super Piano</button>
+    </div>
+
+    <button id="back-btn" onclick="goHome()">🏠 Menu</button>
+    <button id="clear-btn" onclick="clearCanvas()">🧹 Clear</button>
+    
+    <div id="game-container"><canvas id="mainCanvas"></canvas></div>
+
+<script>
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    let currentMode, animationId, audioCtx, items = [], activeKeys = {}, hue = 0;
+    let lastX = null, lastY = null;
+
+    function resize() { 
+        canvas.width = window.innerWidth; 
+        canvas.height = window.innerHeight; 
+        if(currentMode === 'paint') clearCanvas(); 
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function clearCanvas() {
+        ctx.fillStyle = currentMode === 'piano' ? '#000' : 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        items = [];
+    }
+
+    function playSound(freq, type = 'sine', duration = 0.5) {
+        if (!audioCtx) return;
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        g.gain.setValueAtTime(0, audioCtx.currentTime);
+        g.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(); o.stop(audioCtx.currentTime + duration);
+    }
+
+    function startGame(mode) {
+        // We only try to start Audio for the musical games
+        if (mode !== 'paint') {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        document.getElementById('hub').style.display = 'none';
+        document.getElementById('game-container').style.display = 'block';
+        document.getElementById('back-btn').style.display = 'block';
+        document.getElementById('clear-btn').style.display = (mode === 'paint') ? 'block' : 'none';
+        
+        currentMode = mode;
+        lastX = null; lastY = null; // Reset painter position
+        clearCanvas();
+        animate();
+    }
+
+    function goHome() {
+        cancelAnimationFrame(animationId);
+        currentMode = null;
+        document.getElementById('hub').style.display = 'flex';
+        document.getElementById('game-container').style.display = 'none';
+        document.getElementById('back-btn').style.display = 'none';
+        document.getElementById('clear-btn').style.display = 'none';
+    }
+
+    // --- UPDATED PAINTER LOGIC: NO CLICK REQUIRED ---
+    canvas.addEventListener('pointermove', (e) => {
+        if (currentMode !== 'paint') return;
+        
+        // If it's the first touch or we just moved back to the canvas
+        if (lastX === null) {
+            lastX = e.clientX;
+            lastY = e.clientY;
+            return;
+        }
+
+        ctx.beginPath();
+        ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+        ctx.lineWidth = 30; // Nice thick line for Alaina
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(e.clientX, e.clientY);
+        ctx.stroke();
+        
+        [lastX, lastY] = [e.clientX, e.clientY];
+        hue = (hue + 2) % 360;
+    });
+
+    // Reset lastX/Y when she lifts her finger so lines don't "snap" across the screen
+    canvas.addEventListener('pointerleave', () => { lastX = null; lastY = null; });
+    canvas.addEventListener('pointerup', () => { lastX = null; lastY = null; });
+
+    // --- KEYBOARD LOGIC ---
+    window.addEventListener('keydown', (e) => {
+        if (!currentMode) return;
+        const char = e.key.toUpperCase();
+        if (char.length !== 1) return;
+
+        if (currentMode === 'bounce') {
+            playSound(300 + Math.random() * 200, 'sine', 0.2);
+            items.push({ char, x: Math.random()*canvas.width, y: -50, vy: 5, vx: (Math.random()-0.5)*6, size: 90, hue: Math.random()*360, bounce: -0.7 });
+        } else if (currentMode === 'piano' && char >= 'A' && char <= 'Z') {
+            const idx = char.charCodeAt(0) - 65;
+            playSound(261.63 * Math.pow(1.059463, idx), 'sine', 0.6);
+            activeKeys[char] = 15;
+            items.push({ x: (idx * (canvas.width/26)) + (canvas.width/52), y: canvas.height - 150, char, vy: -10, vx: (Math.random()-0.5)*4, life: 1, h: (idx/26)*360, rot: 0 });
+        }
+    });
+
+    function animate() {
+        if (!currentMode) return;
+
+        if (currentMode === 'bounce') {
+            ctx.fillStyle = 'white'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            items.forEach((l, i) => {
+                l.vy += 0.5; l.y += l.vy; l.x += l.vx;
+                if (l.y + l.size/2 > canvas.height) { l.y = canvas.height - l.size/2; l.vy *= l.bounce; if (Math.abs(l.vy) > 2) playSound(150, 'triangle', 0.1); }
+                if (l.x < 0 || l.x > canvas.width) l.vx *= -1;
+                ctx.fillStyle = `hsl(${l.hue}, 100%, 50%)`; ctx.font = `bold ${l.size}px Arial`; ctx.textAlign = "center"; ctx.fillText(l.char, l.x, l.y);
+            });
+        } else if (currentMode === 'piano') {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const kw = canvas.width / 26;
+            for (let i = 0; i < 26; i++) {
+                const c = String.fromCharCode(65 + i), isD = activeKeys[c] > 0;
+                ctx.fillStyle = isD ? `hsl(${(i/26)*360}, 100%, 50%)` : "#222";
+                ctx.fillRect(i*kw, canvas.height-120, kw-2, 120);
+                ctx.fillStyle = isD ? "white" : "#777"; ctx.font = "bold 18px Arial"; ctx.textAlign = "center"; ctx.fillText(c, i*kw + kw/2, canvas.height - 20);
+                if (isD) activeKeys[c]--;
+            }
+            items.forEach((p, i) => {
+                p.y += p.vy; p.x += p.vx; p.vy += 0.2; p.life -= 0.01; p.rot += 0.1;
+                if (p.life <= 0) items.splice(i, 1);
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+                ctx.fillStyle = `hsla(${p.h}, 100%, 60%, ${p.life})`; ctx.font = "bold 80px Arial"; ctx.fillText(p.char, 0, 0); ctx.restore();
+            });
+        }
+        animationId = requestAnimationFrame(animate);
+    }
+</script>
+</body>
+</html>
