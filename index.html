@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Alaina's Game World</title>
     <style>
-        :root { --bg: #fdfcf0; --primary: #ff6b6b; --secondary: #4ecdc4; --tertiary: #ffd93d; --phone: #a29bfe; --abc: #ff9f43; --star: #48dbfb; --fruit: #81ecec; }
+        :root { --bg: #fdfcf0; --primary: #ff6b6b; --secondary: #4ecdc4; --tertiary: #ffd93d; --phone: #a29bfe; --abc: #ff9f43; --star: #48dbfb; --fruit: #81ecec; --glow: #2ecc71; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; font-family: 'Arial Rounded MT Bold', sans-serif; background-color: var(--bg); }
         canvas { display: block; touch-action: none; background: #fff; }
         #hub { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; min-height: 100vh; box-sizing: border-box; }
         .section-title { font-size: 1.2rem; color: #666; margin-top: 25px; text-transform: uppercase; letter-spacing: 2px; }
-        .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; width: 100%; max-width: 1000px; margin-top: 15px; }
-        .menu-btn { padding: 20px; font-size: 18px; border: none; border-radius: 25px; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 15px rgba(0,0,0,0.1); color: white; font-weight: bold; -webkit-tap-highlight-color: transparent; }
-        #back-btn, #clear-btn { position: absolute; padding: 12px 20px; background: white; border: 3px solid #333; border-radius: 20px; font-weight: bold; cursor: pointer; z-index: 100; display: none; }
-        #back-btn { top: 15px; left: 15px; }
-        #clear-btn { top: 15px; right: 15px; background: #ffeb3b; }
+        .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; width: 100%; max-width: 1000px; margin-top: 15px; }
+        .menu-btn { padding: 18px; font-size: 16px; border: none; border-radius: 20px; cursor: pointer; transition: all 0.2s; box-shadow: 0 6px 12px rgba(0,0,0,0.1); color: white; font-weight: bold; -webkit-tap-highlight-color: transparent; }
+        #back-btn, #clear-btn { position: absolute; padding: 10px 18px; background: white; border: 3px solid #333; border-radius: 15px; font-weight: bold; cursor: pointer; z-index: 100; display: none; }
+        #back-btn { top: 10px; left: 10px; }
+        #clear-btn { top: 10px; right: 10px; background: #ffeb3b; }
         #game-container { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     </style>
 </head>
@@ -32,6 +32,7 @@
 
         <p class="section-title">Phone & Tablet Games</p>
         <div class="game-grid">
+            <button class="menu-btn" style="background:var(--glow)" onclick="startGame('glow')">✨ Paint Glow</button>
             <button class="menu-btn" style="background:var(--abc)" onclick="startGame('abc')">🔤 Talking ABC</button>
             <button class="menu-btn" style="background:var(--fruit)" onclick="startGame('fruit')">🍎 Catch Fruit</button>
             <button class="menu-btn" style="background:var(--star)" onclick="startGame('starCatcher')">⭐ Star Catcher</button>
@@ -49,8 +50,7 @@
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
     let currentMode, animationId, audioCtx, items = [], activeKeys = {}, hue = 0;
-    let lastX = null, lastY = null, abcIndex = 0, abcState = "letter";
-    let basketX = 0;
+    let lastX = null, lastY = null, abcIndex = 0, abcState = "letter", basketX = 0;
 
     const abcData = [
         { l: 'A', w: 'Apple', e: '🍎' }, { l: 'B', w: 'Ball', e: '⚽' }, { l: 'C', w: 'Cat', e: '🐱' },
@@ -64,17 +64,8 @@
         { l: 'Y', w: 'Yo-Yo', e: '🪀' }, { l: 'Z', w: 'Zebra', e: '🦓' }
     ];
 
-    function speak(t) {
-        window.speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(t);
-        u.pitch = 1.3; u.rate = 0.9; window.speechSynthesis.speak(u);
-    }
-
-    function unlockAudio() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-    }
-
+    function speak(t) { window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.pitch = 1.3; u.rate = 0.9; window.speechSynthesis.speak(u); }
+    function unlockAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
     function playSound(f, t = 'sine', d = 0.4) {
         if (!audioCtx) return;
         const o = audioCtx.createOscillator(), g = audioCtx.createGain();
@@ -91,66 +82,52 @@
         document.getElementById('hub').style.display = 'none';
         document.getElementById('game-container').style.display = 'block';
         document.getElementById('back-btn').style.display = 'block';
-        document.getElementById('clear-btn').style.display = (m === 'paint') ? 'block' : 'none';
-        currentMode = m; items = []; abcIndex = 0; abcState = "letter";
-        basketX = canvas.width / 2;
+        document.getElementById('clear-btn').style.display = (m === 'paint' || m === 'glow') ? 'block' : 'none';
+        currentMode = m; items = []; abcIndex = 0; abcState = "letter"; basketX = canvas.width / 2;
         clearCanvas(); animate();
     }
 
-    function goHome() {
-        cancelAnimationFrame(animationId); window.speechSynthesis.cancel();
-        currentMode = null; document.getElementById('hub').style.display = 'flex';
-        document.getElementById('game-container').style.display = 'none';
-        document.getElementById('back-btn').style.display = 'none';
-        document.getElementById('clear-btn').style.display = 'none';
-    }
+    function goHome() { cancelAnimationFrame(animationId); window.speechSynthesis.cancel(); currentMode = null; document.getElementById('hub').style.display = 'flex'; document.getElementById('game-container').style.display = 'none'; document.getElementById('back-btn').style.display = 'none'; document.getElementById('clear-btn').style.display = 'none'; }
 
     canvas.addEventListener('pointerdown', (e) => {
         unlockAudio();
-        const tx = e.clientX, ty = e.clientY;
         if (currentMode === 'abc' && abcState === "letter") {
-            const d = abcData[abcIndex]; abcState = "word";
-            speak(`${d.l} is for ${d.w}`);
+            const d = abcData[abcIndex]; abcState = "word"; speak(`${d.l} is for ${d.w}`);
             setTimeout(() => { abcIndex = (abcIndex + 1) % 26; abcState = "letter"; }, 3000);
         }
         if (currentMode === 'bubblePop') {
-            items.forEach((b, i) => { 
-                if (Math.hypot(tx - b.x, ty - b.y) < b.r) { 
-                    playSound(900, 'sine', 0.1); 
-                    b.popped = true; 
-                    b.v = -5; // Animal flies up
-                    setTimeout(() => items.splice(items.indexOf(b), 1), 1000);
-                } 
-            });
+            items.forEach((b, i) => { if (Math.hypot(e.clientX - b.x, e.clientY - b.y) < b.r) { playSound(900, 'sine', 0.1); b.popped = true; b.v = -5; setTimeout(() => items.splice(items.indexOf(b), 1), 1000); } });
         }
         if (currentMode === 'starCatcher') {
-            items.forEach((s, i) => { if (Math.hypot(tx - s.x, ty - s.y) < 60) { playSound(1200, 'sine', 0.1); items.splice(i, 1); } });
+            items.forEach((s, i) => { if (Math.hypot(e.clientX - s.x, e.clientY - s.y) < 60) { playSound(1200, 'sine', 0.1); items.splice(i, 1); } });
         }
         if (currentMode === 'mobilePiano') {
-            const idx = Math.floor(ty / (canvas.height / 8));
+            const idx = Math.floor(e.clientY / (canvas.height / 8));
             playSound(261.63 * Math.pow(1.059, idx * 3)); activeKeys[idx] = 10;
         }
     });
 
     canvas.addEventListener('pointermove', (e) => {
-        if (currentMode === 'paint') {
+        if (currentMode === 'paint' || currentMode === 'glow') {
             if (lastX === null) { lastX = e.clientX; lastY = e.clientY; return; }
-            ctx.beginPath(); ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
-            ctx.lineWidth = 30; ctx.lineCap = 'round'; ctx.moveTo(lastX, lastY); ctx.lineTo(e.clientX, e.clientY); ctx.stroke();
-            lastX = e.clientX; lastY = e.clientY; hue = (hue + 3) % 360;
+            ctx.beginPath(); 
+            ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+            if (currentMode === 'glow') {
+                ctx.shadowBlur = 15; ctx.shadowColor = `hsl(${hue}, 100%, 50%)`;
+                ctx.lineWidth = 20;
+            } else {
+                ctx.lineWidth = 30; ctx.shadowBlur = 0;
+            }
+            ctx.lineCap = 'round'; ctx.moveTo(lastX, lastY); ctx.lineTo(e.clientX, e.clientY); ctx.stroke();
+            lastX = e.clientX; lastY = e.clientY; hue = (hue + 4) % 360;
         }
-        if (currentMode === 'rainbowSlide') {
-            hue = (e.clientY / canvas.height) * 360;
-            playSound(200 + (canvas.height - e.clientY), 'sine', 0.05);
-        }
-        if (currentMode === 'fruit') {
-            basketX = e.clientX;
-        }
+        if (currentMode === 'rainbowSlide') { hue = (e.clientY / canvas.height) * 360; playSound(200 + (canvas.height - e.clientY), 'sine', 0.05); }
+        if (currentMode === 'fruit') basketX = e.clientX;
     });
-    canvas.addEventListener('pointerup', () => { lastX = null; });
+    canvas.addEventListener('pointerup', () => { lastX = null; ctx.shadowBlur = 0; });
 
     function clearCanvas() {
-        ctx.fillStyle = (currentMode === 'piano' || currentMode === 'mobilePiano' || currentMode === 'abc' || currentMode === 'starCatcher' || currentMode === 'fruit') ? '#000' : '#fff';
+        ctx.fillStyle = (currentMode === 'piano' || currentMode === 'mobilePiano' || currentMode === 'abc' || currentMode === 'starCatcher' || currentMode === 'fruit' || currentMode === 'glow') ? '#000' : '#fff';
         ctx.fillRect(0, 0, canvas.width, canvas.height); items = [];
     }
 
@@ -160,8 +137,7 @@
             ctx.fillStyle = 'black'; ctx.fillRect(0,0,canvas.width,canvas.height);
             const d = abcData[abcIndex]; ctx.textAlign = "center";
             if (abcState === "letter") {
-                ctx.fillStyle = `hsl(${(abcIndex/26)*360}, 100%, 60%)`; ctx.font = "bold 200px Arial";
-                ctx.fillText(d.l, canvas.width/2, canvas.height/2);
+                ctx.fillStyle = `hsl(${(abcIndex/26)*360}, 100%, 60%)`; ctx.font = "bold 200px Arial"; ctx.fillText(d.l, canvas.width/2, canvas.height/2);
             } else {
                 ctx.fillStyle = "white"; ctx.font = "bold 60px Arial"; ctx.fillText(`${d.l} is for...`, canvas.width/2, canvas.height/2 - 120);
                 ctx.font = "120px Arial"; ctx.fillText(d.e, canvas.width/2, canvas.height/2);
@@ -170,93 +146,41 @@
         }
         else if (currentMode === 'fruit') {
             ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            // Spawn fruit
-            if (Math.random() < 0.03) {
-                const fruits = ['🍎', '🍊', '🍌', '🍇', '🍉'];
-                items.push({ x: Math.random()*canvas.width, y: -50, v: 3 + Math.random()*2, char: fruits[Math.floor(Math.random()*fruits.length)] });
-            }
-            // Draw basket
-            ctx.font = "80px Arial"; ctx.textAlign = "center";
-            ctx.fillText("🧺", basketX, canvas.height - 50);
-            // Update fruit
-            items.forEach((f, i) => {
-                f.y += f.v;
-                ctx.fillText(f.char, f.x, f.y);
-                if (f.y > canvas.height - 80 && Math.abs(f.x - basketX) < 50) {
-                    playSound(600, 'sine', 0.1); items.splice(i, 1);
-                } else if (f.y > canvas.height) items.splice(i, 1);
-            });
+            if (Math.random() < 0.03) items.push({ x: Math.random()*canvas.width, y: -50, v: 4, char: ['🍎', '🍊', '🍌', '🍇', '🍉'][Math.floor(Math.random()*5)] });
+            ctx.font = "80px Arial"; ctx.textAlign = "center"; ctx.fillText("🧺", basketX, canvas.height - 50);
+            items.forEach((f, i) => { f.y += f.v; ctx.fillText(f.char, f.x, f.y); if (f.y > canvas.height - 80 && Math.abs(f.x - basketX) < 60) { playSound(600, 'sine', 0.1); items.splice(i, 1); } else if (f.y > canvas.height) items.splice(i, 1); });
         }
         else if (currentMode === 'starCatcher') {
             ctx.fillStyle = 'black'; ctx.fillRect(0,0,canvas.width,canvas.height);
             if (Math.random() < 0.05 && items.length < 6) items.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, life: 100 });
-            items.forEach((s, i) => {
-                s.life--; if (s.life <= 0) items.splice(i, 1);
-                ctx.font = "50px Arial"; ctx.fillText("⭐", s.x, s.y);
-            });
+            items.forEach((s, i) => { s.life--; if (s.life <= 0) items.splice(i, 1); ctx.font = "50px Arial"; ctx.fillText("⭐", s.x, s.y); });
         }
-        else if (currentMode === 'rainbowSlide') {
-            ctx.fillStyle = `hsl(${hue}, 100%, 50%)`; ctx.fillRect(0,0,canvas.width,canvas.height);
-        }
+        else if (currentMode === 'rainbowSlide') { ctx.fillStyle = `hsl(${hue}, 100%, 50%)`; ctx.fillRect(0,0,canvas.width,canvas.height); }
         else if (currentMode === 'bubblePop') {
             ctx.fillStyle = 'white'; ctx.fillRect(0,0,canvas.width,canvas.height);
             if (Math.random() < 0.04) items.push({ x: Math.random()*canvas.width, y: canvas.height+50, r: 40, v: 4, h: Math.random()*360, char: ['🦆', '🐟', '🐙', '🐢'][Math.floor(Math.random()*4)], popped: false });
-            items.forEach((b, i) => {
-                b.y -= b.v; 
-                if (!b.popped) {
-                    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
-                    ctx.fillStyle = `hsla(${b.h}, 100%, 50%, 0.4)`; ctx.fill(); ctx.stroke();
-                }
-                ctx.font = "40px Arial"; ctx.textAlign = "center";
-                ctx.fillText(b.char, b.x, b.y + 15);
-                if (b.y < -100) items.splice(i, 1);
-            });
+            items.forEach((b, i) => { b.y -= b.v; if (!b.popped) { ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fillStyle = `hsla(${b.h}, 100%, 50%, 0.4)`; ctx.fill(); ctx.stroke(); } ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.fillText(b.char, b.x, b.y + 15); if (b.y < -100) items.splice(i, 1); });
         }
         else if (currentMode === 'mobilePiano') {
             const kh = canvas.height / 8;
-            for(let i=0; i<8; i++) {
-                ctx.fillStyle = activeKeys[i] > 0 ? `hsl(${(i/8)*360}, 100%, 50%)` : "#222";
-                ctx.fillRect(10, i*kh + 10, canvas.width - 20, kh - 20);
-                if(activeKeys[i] > 0) activeKeys[i]--;
-            }
+            for(let i=0; i<8; i++) { ctx.fillStyle = activeKeys[i] > 0 ? `hsl(${(i/8)*360}, 100%, 50%)` : "#222"; ctx.fillRect(10, i*kh + 10, canvas.width - 20, kh - 20); if(activeKeys[i] > 0) activeKeys[i]--; }
         }
         else if (currentMode === 'bounce') {
             ctx.fillStyle = 'white'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            items.forEach((l) => {
-                l.vy += 0.5; l.y += l.vy; l.x += l.vx;
-                if (l.y + l.size/2 > canvas.height) { l.y = canvas.height-l.size/2; l.vy *= -0.7; }
-                if (l.x < 0 || l.x > canvas.width) l.vx *= -1;
-                ctx.fillStyle = `hsl(${l.hue}, 100%, 50%)`; ctx.font = `bold ${l.size}px Arial`; ctx.textAlign="center"; ctx.fillText(l.char, l.x, l.y);
-            });
+            items.forEach((l) => { l.vy += 0.5; l.y += l.vy; l.x += l.vx; if (l.y + l.size/2 > canvas.height) { l.y = canvas.height-l.size/2; l.vy *= -0.7; } if (l.x < 0 || l.x > canvas.width) l.vx *= -1; ctx.fillStyle = `hsl(${l.hue}, 100%, 50%)`; ctx.font = `bold ${l.size}px Arial`; ctx.textAlign="center"; ctx.fillText(l.char, l.x, l.y); });
         }
         else if (currentMode === 'piano') {
             ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(0,0,canvas.width,canvas.height);
             const kw = canvas.width/26;
-            for(let i=0; i<26; i++) {
-                const c = String.fromCharCode(65+i), isD = activeKeys[c]>0;
-                ctx.fillStyle = isD ? `hsl(${(i/26)*360}, 100%, 50%)` : "#222";
-                ctx.fillRect(i*kw, canvas.height-120, kw-2, 120);
-                if(isD) activeKeys[c]--;
-            }
-            items.forEach((p, i) => {
-                p.y += p.vy; p.vy += 0.2; p.life -= 0.01;
-                if(p.life <= 0) items.splice(i, 1);
-                ctx.fillStyle = `hsla(${p.h}, 100%, 60%, ${p.life})`; ctx.font = "bold 60px Arial"; ctx.fillText(p.char, p.x, p.y);
-            });
+            for(let i=0; i<26; i++) { const c = String.fromCharCode(65+i), isD = activeKeys[c]>0; ctx.fillStyle = isD ? `hsl(${(i/26)*360}, 100%, 50%)` : "#222"; ctx.fillRect(i*kw, canvas.height-120, kw-2, 120); if(isD) activeKeys[c]--; }
+            items.forEach((p, i) => { p.y += p.vy; p.vy += 0.2; p.life -= 0.01; if(p.life <= 0) items.splice(i, 1); ctx.fillStyle = `hsla(${p.h}, 100%, 60%, ${p.life})`; ctx.font = "bold 60px Arial"; ctx.fillText(p.char, p.x, p.y); });
         }
         animationId = requestAnimationFrame(animate);
     }
 
     window.addEventListener('keydown', (e) => {
-        if (currentMode === 'bounce') {
-            const c = e.key.toUpperCase(); if(c.length !== 1) return;
-            playSound(400); items.push({ char: c, x: Math.random()*canvas.width, y: -50, vy: 5, vx: (Math.random()-0.5)*6, size: 90, hue: Math.random()*360 });
-        }
-        if (currentMode === 'piano') {
-            const c = e.key.toUpperCase(); if(c.length !== 1 || c < 'A' || c > 'Z') return;
-            const idx = c.charCodeAt(0) - 65; playSound(261.63 * Math.pow(1.059, idx));
-            activeKeys[c] = 15; items.push({ x: (idx*(canvas.width/26)) + (canvas.width/52), y: canvas.height-150, char: c, vy: -10, life: 1, h: (idx/26)*360 });
-        }
+        if (currentMode === 'bounce') { const c = e.key.toUpperCase(); if(c.length !== 1) return; playSound(400); items.push({ char: c, x: Math.random()*canvas.width, y: -50, vy: 5, vx: (Math.random()-0.5)*6, size: 90, hue: Math.random()*360 }); }
+        if (currentMode === 'piano') { const c = e.key.toUpperCase(); if(c.length !== 1 || c < 'A' || c > 'Z') return; const idx = c.charCodeAt(0) - 65; playSound(261.63 * Math.pow(1.059, idx)); activeKeys[c] = 15; items.push({ x: (idx*(canvas.width/26)) + (canvas.width/52), y: canvas.height-150, char: c, vy: -10, life: 1, h: (idx/26)*360 }); }
     });
 
     function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; if(currentMode) clearCanvas(); }
