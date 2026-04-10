@@ -85,6 +85,11 @@
         <button class="menu-btn" style="background:var(--numB);color:#333" onclick="startGame('numberBounce')">🔢 Number Bounce</button>
         <button class="menu-btn" style="background:var(--match)"      onclick="startGame('colorMatch')">🎨 Color Match</button>
     </div>
+
+    <p class="section-title">Stories</p>
+    <div class="game-grid">
+        <button class="menu-btn" style="background:linear-gradient(135deg,#ff6b6b,#a29bfe);font-size:17px" onclick="window.location.href='storybook.html'">📖 Story Time!</button>
+    </div>
 </div>
 
 <button id="back-btn"       onclick="goHome()">🏠 Menu</button>
@@ -429,9 +434,12 @@ canvas.addEventListener('pointerdown', e => {
         items.push({type:'rocket', x:canvas.width/2, y:canvas.height-30, tx:p.x, ty:p.y,
             vx:(dx/dist)*speed, vy:(dy/dist)*speed, hue:Math.random()*360, life:100});
     }
+    // Fix: also update basketX on tap so touching without dragging works
+    if (currentMode === 'snowflake') basketX = p.x;
     if (currentMode === 'cloudJumper') {
         for (let i = items.length-1; i >= 0; i--) {
-            if (items[i].type==='drop' && Math.hypot(p.x-items[i].x, p.y-items[i].y) < 30) {
+            // Fix: larger hit radius (55px) for mobile tap accuracy
+            if (items[i].type==='drop' && Math.hypot(p.x-items[i].x, p.y-items[i].y) < 55) {
                 playSound(600,'sine',0.1); items.splice(i,1); score++; break;
             }
         }
@@ -439,7 +447,8 @@ canvas.addEventListener('pointerdown', e => {
     if (currentMode === 'butterfly') {
         for (let i = items.length-1; i >= 0; i--) {
             const b = items[i];
-            if (!b.caught && Math.hypot(p.x-b.x, p.y-b.y) < b.size*0.7) {
+            // Fix: emoji baseline is at b.y, visual center is ~b.size*0.4 above it
+            if (!b.caught && Math.hypot(p.x-b.x, p.y-(b.y-b.size*0.4)) < b.size*0.9) {
                 playSound(800+Math.random()*400,'sine',0.2); b.caught = true; b.catchAnim = 20; score++; break;
             }
         }
@@ -603,11 +612,14 @@ function animate() {
         const bg=ctx.createLinearGradient(0,0,0,canvas.height);
         bg.addColorStop(0,'#87CEEB'); bg.addColorStop(0.65,'#90EE90'); bg.addColorStop(1,'#228B22');
         ctx.fillStyle=bg; ctx.fillRect(0,0,canvas.width,canvas.height);
-        if (Math.random()<0.018 && items.length<8) {
+        // Fix: higher spawn rate; butterflies start on-screen so game isn't blank
+        if (Math.random()<0.025 && items.length<8) {
+            const onScreen = items.length < 3; // first few spawn in view
             const dir = Math.random()<0.5 ? 1 : -1;
-            items.push({x:dir>0?-50:canvas.width+50, y:50+Math.random()*(canvas.height*0.6),
-                vx:dir*(1+Math.random()*2), vy:0, wobble:Math.random()*Math.PI*2,
-                wobbleSpeed:0.05+Math.random()*0.05, hue:Math.random()*360, size:40+Math.random()*20, caught:false, catchAnim:0});
+            items.push({x:onScreen ? 80+Math.random()*(canvas.width-160) : (dir>0?-50:canvas.width+50),
+                y:60+Math.random()*(canvas.height*0.55),
+                vx:dir*(0.8+Math.random()*1.5), vy:0, wobble:Math.random()*Math.PI*2,
+                wobbleSpeed:0.05+Math.random()*0.05, hue:Math.random()*360, size:44+Math.random()*20, caught:false, catchAnim:0});
         }
         ctx.textAlign='center';
         for (let i=items.length-1;i>=0;i--) {
@@ -638,9 +650,10 @@ function animate() {
                 ctx.beginPath(); ctx.ellipse(it.x,it.y,it.w/2,28,0,0,Math.PI*2);
                 ctx.ellipse(it.x-it.w/4,it.y+12,it.w/3,22,0,0,Math.PI*2);
                 ctx.ellipse(it.x+it.w/4,it.y+12,it.w/3,22,0,0,Math.PI*2); ctx.fill();
-                if (Math.random()<0.006) items.push({type:'drop', x:it.x+(Math.random()-0.5)*it.w*0.6, y:it.y+20, vy:3+Math.random()*3});
+                // Fix: higher spawn rate so drops appear frequently
+                if (Math.random()<0.02) items.push({type:'drop', x:it.x+(Math.random()-0.5)*it.w*0.6, y:it.y+30, vy:3+Math.random()*3});
             } else if (it.type==='drop') {
-                it.y+=it.vy; ctx.font='30px Arial'; ctx.fillText('💧',it.x,it.y);
+                it.y+=it.vy; ctx.font='45px Arial'; ctx.fillText('💧',it.x,it.y);
                 if (it.y>canvas.height-20) { playSadSound(); spawnMiss(it.x); items.splice(i,1); }
             }
         }

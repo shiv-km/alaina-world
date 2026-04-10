@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Story Time 📖 — Alaina's World</title>
+<style>
+  :root {
+    --bg: #fff9f0;
+    --btn-radius: 22px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Library screen ── */
+  #library {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px 60px;
+  }
+  #library h1 {
+    font-size: clamp(1.8rem, 6vw, 3rem);
+    color: #ff6b6b;
+    text-shadow: 0 3px 0 #ffd93d;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+  #library p.sub {
+    color: #888;
+    font-size: 1rem;
+    margin-bottom: 24px;
+  }
+  .story-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+    width: 100%;
+    max-width: 900px;
+  }
+  .story-card {
+    border-radius: 22px;
+    padding: 20px 12px 16px;
+    cursor: pointer;
+    text-align: center;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.13);
+    transition: transform 0.15s, box-shadow 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    border: none;
+    outline: none;
+  }
+  .story-card:active { transform: scale(0.95); }
+  .story-card .cover-emoji {
+    font-size: 3.8rem;
+    line-height: 1.1;
+    display: block;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.18));
+  }
+  .story-card .story-title {
+    font-size: 0.88rem;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    line-height: 1.25;
+  }
+  .back-home {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 10px 22px;
+    background: #fff;
+    border: 3px solid #ff6b6b;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: #ff6b6b;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    text-decoration: none;
+  }
+  .back-home:active { transform: scale(0.95); }
+
+  /* ── Story reader ── */
+  #reader {
+    display: none;
+    position: fixed;
+    inset: 0;
+    flex-direction: column;
+    background: #fff;
+    z-index: 100;
+  }
+  #reader.open { display: flex; }
+
+  /* Top bar */
+  .reader-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.95);
+    border-bottom: 2px solid #f0f0f0;
+    flex-shrink: 0;
+  }
+  .reader-top .r-title {
+    font-size: clamp(0.85rem, 3.5vw, 1.1rem);
+    font-weight: bold;
+    color: #333;
+    text-align: center;
+    flex: 1;
+  }
+  .top-btn {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 14px;
+    font-weight: bold;
+    font-size: 0.85rem;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
+  }
+  .top-btn.exit { background: #ff6b6b; color: #fff; }
+  .top-btn.pg   { background: #f0f0f0; color: #555; min-width: 60px; text-align: center; }
+
+  /* Scene */
+  .scene-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .scene-art {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .art-inner {
+    text-align: center;
+    padding: 10px;
+    width: 100%;
+    pointer-events: none;
+  }
+  .art-inner .big-scene {
+    font-size: clamp(4rem, 18vw, 9rem);
+    line-height: 1.1;
+    display: block;
+    animation: scenePop 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  }
+  @keyframes scenePop {
+    from { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+    to   { transform: scale(1) rotate(0deg);   opacity: 1; }
+  }
+  .art-inner .scene-chars {
+    font-size: clamp(2.5rem, 10vw, 5.5rem);
+    display: block;
+    margin-top: 8px;
+    animation: slideUp 0.4s ease forwards;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  /* Text box */
+  .story-text-box {
+    background: rgba(255,255,255,0.97);
+    border-top: 3px solid #f0f0f0;
+    padding: 14px 20px;
+    flex-shrink: 0;
+  }
+  .story-text-box p {
+    font-size: clamp(1rem, 3.5vw, 1.35rem);
+    color: #222;
+    line-height: 1.55;
+    text-align: center;
+  }
+
+  /* Nav */
+  .reader-nav {
+    display: flex;
+    gap: 10px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.98);
+    border-top: 2px solid #f0f0f0;
+    flex-shrink: 0;
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 14px 10px;
+    border: none;
+    border-radius: 18px;
+    font-size: clamp(1rem, 4vw, 1.2rem);
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-btn:active { transform: scale(0.95); }
+  .nav-btn.prev { background: #e0e0e0; color: #333; }
+  .nav-btn.next { background: #4ecdc4; color: #fff; }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; }
+
+  /* Page-end card */
+  .end-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 18px;
+    padding: 20px;
+  }
+  .end-card .end-emoji { font-size: 5rem; animation: scenePop 0.5s ease forwards; }
+  .end-card h2 { font-size: clamp(1.4rem, 5vw, 2rem); color: #ff6b6b; text-align: center; }
+  .end-card .moral {
+    background: #fff9d0;
+    border-left: 5px solid #ffd93d;
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: clamp(0.95rem, 3vw, 1.15rem);
+    color: #555;
+    line-height: 1.5;
+    max-width: 480px;
+    text-align: center;
+  }
+  .end-btn {
+    padding: 14px 32px;
+    background: #ff6b6b;
+    color: #fff;
+    border: none;
+    border-radius: 22px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  /* Confetti burst on end */
+  .confetti-piece {
+    position: fixed;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: confettiFall linear forwards;
+    z-index: 9999;
+  }
+  @keyframes confettiFall {
+    0%   { transform: translateY(0) rotate(0deg);   opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Library ── -->
+<div id="library">
+  <a href="index.html" class="back-home">🏠 Back to Alaina's World</a>
+  <h1>📖 Story Time!</h1>
+  <p class="sub">Choose a story to read</p>
+  <div class="story-grid" id="storyGrid"></div>
+</div>
+
+<!-- ── Reader ── -->
+<div id="reader">
+  <div class="reader-top">
+    <button class="top-btn exit" onclick="closeReader()">✕ Stories</button>
+    <span class="r-title" id="readerTitle"></span>
+    <button class="top-btn pg"   id="pageCounter"></button>
+  </div>
+  <div class="scene-wrap">
+    <div class="scene-art" id="sceneArt"></div>
+    <div class="story-text-box" id="textBox"></div>
+  </div>
+  <div class="reader-nav">
+    <button class="nav-btn prev" id="prevBtn" onclick="changePage(-1)">◀ Back</button>
+    <button class="nav-btn next" id="nextBtn" onclick="changePage(1)">Next ▶</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  STORY DATA  (title, cover emoji, background gradient,
+//               pages: { art, chars, text })
+// ═══════════════════════════════════════════════════════
+const STORIES = [
+  {
+    id: 'tortoise-hare',
+    title: 'The Tortoise & the Hare',
+    cover: '🐢🐇',
+    bg: 'linear-gradient(135deg,#a8e6cf,#dcedc1)',
+    cardColor: '#27ae60',
+    moral: '"Slow and steady wins the race!" — Never give up, and never be overconfident.',
+    pages: [
+      { art:'🌳🌿🌳', chars:'🐇💨', text:'In a sunny forest, Hare was the fastest animal of all. He could zoom past every creature without even trying!' },
+      { art:'🌸🌼🌸', chars:'🐢🚶', text:'Tortoise was slow and steady. He walked quietly along the path every single day without complaining.' },
+      { art:'🏁🏆', chars:'🐇😏🐢', text:'One day, Hare laughed at Tortoise. "You are SO slow! Want to race?" he teased. Tortoise smiled calmly. "Yes, I accept!"' },
+      { art:'🌤️🏃', chars:'💨🐇', text:'BANG! The race began. Hare sprinted so fast he disappeared around the bend in seconds!' },
+      { art:'🌳😴', chars:'💤🐇', text:'Halfway through, Hare looked back. He couldn\'t even see Tortoise! "I\'ll take a little nap," he chuckled, and curled up under a shady tree.' },
+      { art:'🌿🐢', chars:'🐢💪', text:'Meanwhile, Tortoise kept walking — one slow step at a time. He didn\'t stop. He didn\'t look back. He just kept going.' },
+      { art:'🏁🎉', chars:'🐢🏅', text:'Tortoise crossed the finish line! The animals cheered wildly. Then Hare woke up — and saw Tortoise had already won!' },
+      { art:'🌟😊', chars:'🐢🤝🐇', text:'Tortoise smiled kindly. "Well done, friend. Want to try again tomorrow?" Hare nodded, and they became the best of friends.' },
+    ]
+  },
+  {
+    id: 'three-pigs',
+    title: 'The Three Little Pigs',
+    cover: '🐷🐷🐷',
+    bg: 'linear-gradient(135deg,#ffecd2,#fcb69f)',
+    cardColor: '#e17055',
+    moral: '"Work hard and build strong!" — Taking shortcuts never pays off.',
+    pages: [
+      { art:'🌅🌻', chars:'🐷🐷🐷', text:'Three little pigs set off into the world to build their very own homes. Each pig had a different plan!' },
+      { art:'🌾🏚️', chars:'🐷1️⃣', text:'The first little pig was lazy. He gathered straw and built his house quickly. "Done! Time to play!" he cheered.' },
+      { art:'🪵🏠', chars:'🐷2️⃣', text:'The second pig used sticks. It took a bit longer, but he too rushed. "Good enough!" he said, and went off to dance.' },
+      { art:'🧱🏗️', chars:'🐷3️⃣😤', text:'The third pig worked hard all day and all night laying bricks, one by one. His brothers laughed, but he kept going.' },
+      { art:'🌲🐺', chars:'🐺😈', text:'Then came the Big Bad Wolf! He huffed and puffed and blew the straw house DOWN! The first pig ran to his brother.' },
+      { art:'💨🏚️', chars:'🐺😤🐷🐷', text:'The wolf blew the stick house down too! Both pigs ran as fast as their trotters could carry them to the brick house.' },
+      { art:'🧱💨', chars:'🐺😤😤😤', text:'The wolf huffed, and puffed, and huffed again — but the brick house did NOT move. He huffed until he ran out of breath!' },
+      { art:'🎉🏠', chars:'🐷🐷🐷🎊', text:'The three pigs were safe and sound! They laughed and danced inside. The wolf slunk away and never came back.' },
+    ]
+  },
+  {
+    id: 'goldilocks',
+    title: 'Goldilocks & the Three Bears',
+    cover: '🐻🍲👧',
+    bg: 'linear-gradient(135deg,#ffd93d,#ffe9a0)',
+    cardColor: '#f9ca24',
+    moral: '"Always respect others\' belongings." — Curiosity is great, but ask permission first!',
+    pages: [
+      { art:'🌲🏡🌲', chars:'🐻🐻🐻', text:'Deep in the forest lived three bears — Papa Bear, Mama Bear, and Baby Bear. One morning they made porridge for breakfast.' },
+      { art:'🍲🌡️', chars:'🐻3️⃣😮', text:'The porridge was too hot! So the bears went for a walk in the woods to let it cool down.' },
+      { art:'🌸👧💛', chars:'👧🚶', text:'A little girl named Goldilocks came skipping through the forest. She spotted the bears\' cozy cottage and peeked inside.' },
+      { art:'🍲🥣', chars:'👧😋', text:'She tasted Papa\'s porridge — too hot! Mama\'s — too cold! Baby\'s — juuust right! She ate it all up.' },
+      { art:'🪑💺', chars:'👧🪑💥', text:'Goldilocks tried the chairs. Papa\'s was too big. Mama\'s too soft. Baby\'s was JUST right — until it broke with a CRACK!' },
+      { art:'🛏️💤', chars:'👧😴', text:'Upstairs, she tried the beds. After testing all three, she fell fast asleep in Baby Bear\'s cozy little bed.' },
+      { art:'🐻😲', chars:'🐻🐻🐻😡', text:'"Someone\'s been eating my porridge!" roared Baby Bear. "And they\'re STILL here!" The three bears found Goldilocks asleep!' },
+      { art:'🌲🏃', chars:'👧💨', text:'Goldilocks woke up, saw the three bears, let out a yell, and ran all the way home! She never went into a stranger\'s house again.' },
+    ]
+  },
+  {
+    id: 'red-riding',
+    title: 'Little Red Riding Hood',
+    cover: '🧕🐺🌲',
+    bg: 'linear-gradient(135deg,#ff6b6b,#ffa07a)',
+    cardColor: '#e84393',
+    moral: '"Never talk to strangers." — Always tell a trusted adult if something feels wrong.',
+    pages: [
+      { art:'🏡🌸', chars:'👧🧣❤️', text:'Once upon a time, there was a sweet little girl who always wore a bright red hooded cloak. Everyone called her Little Red Riding Hood.' },
+      { art:'🧺🥧', chars:'👧🧺', text:'One day, her mother packed a basket of goodies for Grandma, who was ill. "Go straight through the forest and don\'t talk to strangers!" said Mama.' },
+      { art:'🌲🌲🌲', chars:'👧🌟', text:'Little Red Riding Hood skipped happily through the forest, admiring the flowers and butterflies along the way.' },
+      { art:'🌿🐺', chars:'🐺😈👧', text:'Suddenly, a sly wolf appeared. "Where are you going, little girl?" he asked with a big fake smile. She told him all about Grandma.' },
+      { art:'🏃💨', chars:'🐺😈', text:'The wolf raced ahead on a shortcut to Grandma\'s cottage. He arrived first and gobbled Grandma up (she was okay inside his tummy) and wore her clothes!' },
+      { art:'🏡🚪', chars:'👧🔍', text:'When Little Red arrived, she noticed something strange. "Grandma, what big eyes you have!" — "All the better to see you with!"' },
+      { art:'😱🦺', chars:'🪓🪵', text:'"What big TEETH you have!" — "All the better to EAT you with!" ROAR! Just then, a brave woodcutter heard the screaming and rushed in.' },
+      { art:'🎉🏡', chars:'👧👵🤗', text:'The woodcutter saved the day! Grandma popped out safe and sound. They ate the goodies together. Little Red always listened to Mama after that.' },
+    ]
+  },
+  {
+    id: 'lion-mouse',
+    title: 'The Lion & the Mouse',
+    cover: '🦁🐭',
+    bg: 'linear-gradient(135deg,#fdcb6e,#e17055)',
+    cardColor: '#e67e22',
+    moral: '"No act of kindness is ever too small." — Even the smallest friend can help the mightiest.',
+    pages: [
+      { art:'🌿🌞', chars:'🦁😴', text:'A mighty lion was sleeping peacefully under a tree in the savannah. The whole jungle was quiet.' },
+      { art:'🐭🌿', chars:'🐭🏃', text:'A tiny mouse was scurrying past and accidentally ran right across the lion\'s nose. The lion woke up with a ROAR!' },
+      { art:'🦁😤🐭', chars:'🦁✊🐭😨', text:'"How DARE you wake me!" the lion bellowed, trapping the mouse under his huge paw. "I shall eat you!"' },
+      { art:'🙏✨', chars:'🐭🙏', text:'"Please spare me, great King! Someday I may be able to help you!" The lion laughed loudly — but let the tiny mouse go.' },
+      { art:'🌲🪤', chars:'🦁😱', text:'Days later, the lion was caught in a hunter\'s net! He roared and struggled but couldn\'t break free.' },
+      { art:'🐭👂', chars:'🐭👂🦁', text:'The little mouse heard the roars and raced over. She saw the mighty lion tangled in ropes. "I\'ll help you, friend!"' },
+      { art:'✂️🪢', chars:'🐭🦷🦷🦷', text:'With her sharp little teeth, she gnawed and chewed through the ropes, one by one, until the net fell away!' },
+      { art:'🌅🌟', chars:'🦁🐭🤝', text:'"You laughed when I said I\'d help," smiled Mouse. "Friends come in all sizes!" The lion bowed his great mane with gratitude.' },
+    ]
+  },
+  {
+    id: 'ugly-duckling',
+    title: 'The Ugly Duckling',
+    cover: '🦢🐥',
+    bg: 'linear-gradient(135deg,#74b9ff,#a29bfe)',
+    cardColor: '#6c5ce7',
+    moral: '"Be yourself — your time to shine will come." — True beauty is what\'s inside.',
+    pages: [
+      { art:'🌾🥚', chars:'🦆🥚🥚🥚', text:'In a cozy nest by the pond, a mama duck sat on her eggs. One by one, they hatched into fluffy yellow ducklings.' },
+      { art:'🥚💥', chars:'🐥🐥🐥😮', text:'But one big egg was last to hatch. Out tumbled a large, grey, clumsy bird. "You look nothing like us!" quacked the others.' },
+      { art:'💧😢', chars:'🦆灰', text:'The poor duckling was teased everywhere he went. He was too big, too grey, too clumsy. He ran away into the wide world, alone and sad.' },
+      { art:'❄️🌨️', chars:'🦆😨', text:'Winter came, cold and harsh. The ugly duckling struggled to find food and shelter. He hid in hollow logs and frozen reeds.' },
+      { art:'🌸🌱', chars:'🌞🦆', text:'Then spring arrived! Flowers bloomed, the ice melted, and the duckling felt a warmth in his heart. Something felt different.' },
+      { art:'🏞️💦', chars:'🦆🔍', text:'He flew to a beautiful lake — and saw his reflection. He couldn\'t believe his eyes! He was no longer grey and clumsy.' },
+      { art:'🦢✨', chars:'🦢🦢🦢', text:'He was a SWAN — tall, graceful, and dazzling white! Three beautiful swans swam over and welcomed him as one of their own.' },
+      { art:'🌟💫', chars:'🦢😊', text:'"Once I was laughed at," he thought. "But now I know — being different is something to celebrate!" And he lived joyfully ever after.' },
+    ]
+  },
+  {
+    id: 'beanstalk',
+    title: 'Jack & the Beanstalk',
+    cover: '🌱🏰☁️',
+    bg: 'linear-gradient(135deg,#55efc4,#00b894)',
+    cardColor: '#00b894',
+    moral: '"Be brave and clever!" — But also, don\'t make deals without thinking them through.',
+    pages: [
+      { art:'🏚️🐄', chars:'👦🐄', text:'Jack and his mother were very poor. One day, his mother said they must sell their only cow, Bessie, for food.' },
+      { art:'🌱✨', chars:'👦🫘', text:'On the way to market, Jack met a funny old man who traded five "magic beans" for Bessie. Jack\'s mother was furious!' },
+      { art:'🌙💤🌱', chars:'🌱🌱🌱', text:'She threw the beans out the window in anger. But overnight, a GIGANTIC beanstalk grew all the way up into the clouds!' },
+      { art:'☁️🏰', chars:'👦🧗', text:'Jack climbed and climbed until he reached a land above the clouds, where a enormous golden castle stood.' },
+      { art:'🏰👣', chars:'👦😮', text:'Inside lived a terrifying giant! "FEE FI FO FUM!" the giant boomed. Jack hid quickly behind a flower pot.' },
+      { art:'🐔🥚', chars:'🐔✨💛', text:'Jack spotted a magical golden goose that laid golden eggs. He grabbed it and ran with giant footsteps shaking the ground!' },
+      { art:'🌱🪓', chars:'👦🪓💨', text:'Jack slid down the beanstalk with the giant close behind. "Quick, Mum — the axe!" CHOP! Down went the beanstalk. THUD went the giant.' },
+      { art:'🏡🌟', chars:'👦👩🐔💛', text:'The golden goose laid golden eggs every day. Jack and his mother were never poor again. They lived happily ever after!' },
+    ]
+  },
+  {
+    id: 'crying-wolf',
+    title: 'The Boy Who Cried Wolf',
+    cover: '🐺👦',
+    bg: 'linear-gradient(135deg,#81ecec,#00cec9)',
+    cardColor: '#0984e3',
+    moral: '"Always tell the truth." — If you lie, people won\'t believe you when it really matters.',
+    pages: [
+      { art:'⛰️🌤️', chars:'👦🐑', text:'High up on a hill lived a shepherd boy who watched over the village sheep every day. He was bored and liked to play tricks.' },
+      { art:'🐺😱', chars:'👦📣', text:'One quiet afternoon, he shouted at the top of his lungs: "WOLF! WOLF! A wolf is chasing the sheep!"' },
+      { art:'🏃🏃', chars:'👨👩👨', text:'The villagers dropped everything and ran up the hill as fast as they could — only to find the boy laughing his head off. No wolf!' },
+      { art:'😂🤷', chars:'👦😏', text:'"Ha ha! Fooled you all!" he giggled. The villagers shook their heads and went back to the village, grumbling.' },
+      { art:'🌙🐺', chars:'🐺👀', text:'A few days later, the boy was bored again. "WOLF! WOLF!" he yelled even louder. Again the villagers ran — and again, no wolf.' },
+      { art:'😤🏡', chars:'👨😤🏃', text:'"He\'s just playing tricks again," they said, and returned to their homes. Nobody trusted his cries anymore.' },
+      { art:'🐺🐑', chars:'🐺😈🐑😱', text:'Then one grey evening — a REAL wolf appeared! It snarled and leaped toward the sheep. The boy screamed: "WOLF! WOLF! Please help!"' },
+      { art:'🌑😔', chars:'👦😢🐑', text:'But no one came. They thought it was another lie. The wolf scattered the sheep and vanished. The boy learned — the hard, sad way — that honesty matters most.' },
+    ]
+  },
+  {
+    id: 'ant-grasshopper',
+    title: 'The Ant & the Grasshopper',
+    cover: '🐜🦗',
+    bg: 'linear-gradient(135deg,#ffeaa7,#fdcb6e)',
+    cardColor: '#e17055',
+    moral: '"Work hard in good times to prepare for hard times." — Always plan ahead!',
+    pages: [
+      { art:'☀️🌻', chars:'🐜🐜🐜', text:'All through the bright summer, the little ants worked hard every single day — carrying seeds and crumbs back to their cozy home.' },
+      { art:'🌿🎵', chars:'🦗🎸', text:'Nearby, the grasshopper played his fiddle and sang all day long. "Why work so hard?" he laughed. "There\'s plenty of food right now!"' },
+      { art:'🐜💪', chars:'🐜🌾', text:'"We\'re storing food for winter," the ants explained. "You should too!" But the grasshopper just laughed and played another tune.' },
+      { art:'🍂🌬️', chars:'🦗😳', text:'Autumn arrived. The leaves turned gold and fell. The grasshopper noticed the fields were becoming bare. He started to worry.' },
+      { art:'❄️🌨️', chars:'🦗🥶', text:'Winter came hard and cold. Snow covered the ground. The grasshopper had no food, no shelter, and nowhere warm to go.' },
+      { art:'🏠🌟', chars:'🐜🏡🔥', text:'The ants were snug and warm in their underground home, eating the food they had stored. They had worked all summer just for this!' },
+      { art:'🚪🙏', chars:'🦗🙏🐜', text:'The shivering grasshopper knocked on the ants\' door. "Please, may I have just a little food? I\'m so hungry and cold." he begged.' },
+      { art:'🤝🌅', chars:'🐜🦗😊', text:'The kind ants shared their food and gave him shelter. "Next summer, work with us," they smiled. And he did — and they all thrived!' },
+    ]
+  },
+  {
+    id: 'cinderella',
+    title: 'Cinderella',
+    cover: '👠👸✨',
+    bg: 'linear-gradient(135deg,#fd79a8,#e84393)',
+    cardColor: '#e84393',
+    moral: '"Kindness and goodness always shine through." — Your true self is your greatest gift.',
+    pages: [
+      { art:'🏚️🧹', chars:'👧😔', text:'Cinderella lived with her wicked stepmother and two stepsisters. They made her cook, clean, and scrub all day long.' },
+      { art:'💌📜', chars:'💌📬', text:'One day, a royal invitation arrived! The Prince was holding a grand ball at the palace. Everyone was invited — except Cinderella.' },
+      { art:'✨🧚', chars:'🧚‍♀️✨', text:'As Cinderella wept alone, her Fairy Godmother appeared in a burst of sparkles. "You shall go to the ball!" she declared with a wave of her wand.' },
+      { art:'🎀👗', chars:'👸✨', text:'With a WHOOSH of magic, a beautiful gown appeared, and a sparkling carriage made from a pumpkin! Two glass slippers completed the look.' },
+      { art:'🏰🕯️', chars:'👸🤴', text:'At the ball, the Prince saw Cinderella and couldn\'t take his eyes off her. They danced every dance together all night long.' },
+      { art:'🕛💫', chars:'👸😱⏰', text:'BONG! BONG! The clock struck midnight! "I must go!" Cinderella cried, running down the palace steps. She lost one glass slipper on the way!' },
+      { art:'👠🔍', chars:'🤴👠', text:'The Prince searched every house in the kingdom with the tiny glass slipper. He was determined to find the mystery girl.' },
+      { art:'💍🌟', chars:'👸🤴👑', text:'The slipper fit Cinderella perfectly! The Prince knew she was the one. They were married and lived happily — and kindly — ever after.' },
+    ]
+  },
+  {
+    id: 'snow-white',
+    title: 'Snow White',
+    cover: '👸🍎🪞',
+    bg: 'linear-gradient(135deg,#a29bfe,#6c5ce7)',
+    cardColor: '#8e44ad',
+    moral: '"Beauty is kindness and love." — Jealousy only hurts the one who feels it.',
+    pages: [
+      { art:'🪞✨', chars:'👸🪞', text:'A wicked queen had a magic mirror. Every day she asked: "Mirror, mirror on the wall, who is the fairest of them all?"' },
+      { art:'🪞😡', chars:'🪞👸', text:'One day the mirror said: "Snow White, with hair as dark as night and skin as white as snow, is the fairest in the land!" The queen was furious!' },
+      { art:'🌲🏃', chars:'👸🏃🌲', text:'The queen ordered Snow White to be taken into the forest. A kind huntsman let her go free. Snow White ran deep into the woods.' },
+      { art:'🏡🌲', chars:'👸🏡', text:'She found a tiny cottage. Inside were seven tiny beds, seven tiny chairs, and seven tiny bowls of porridge — all perfectly clean.' },
+      { art:'⛏️💎', chars:'🧔👴😁', text:'Seven dwarfs came home from the mines! They found Snow White asleep and welcomed her joyfully. She cooked and cleaned for them.' },
+      { art:'🍎😈', chars:'👵🍎😈', text:'The wicked queen discovered Snow White was alive! Disguised as an old woman, she offered Snow White a shiny red apple — secretly poisoned!' },
+      { art:'😴💤', chars:'👸💤🍎', text:'Snow White bit the apple and fell into a deep, enchanted sleep. The dwarfs wept and laid her gently in a glass coffin in the forest.' },
+      { art:'💋✨👑', chars:'🤴💋👸🌟', text:'A prince heard of the sleeping princess and kissed her gently. The spell broke! Snow White woke up, and they lived happily ever after!' },
+    ]
+  },
+  {
+    id: 'gingerbread',
+    title: 'The Gingerbread Man',
+    cover: '🫚🎉🏃',
+    bg: 'linear-gradient(135deg,#e17055,#d35400)',
+    cardColor: '#d35400',
+    moral: '"Be careful of flattery!" — Don\'t trust someone who seems too nice for no reason.',
+    pages: [
+      { art:'🏡🔥', chars:'👩🍪', text:'An old woman baked a gingerbread man and put him in the oven. When she opened it — POP! He jumped out and ran away!' },
+      { art:'🏃💨', chars:'🍪💨😂', text:'"Run, run, as fast as you can! You can\'t catch me, I\'m the Gingerbread Man!" he shouted as he bolted out the door.' },
+      { art:'👴🏃', chars:'👴💨🍪', text:'The old man chased him. "Stop! Stop!" he yelled. But the Gingerbread Man was far too quick and zoomed down the lane.' },
+      { art:'👧🐄🏃', chars:'👧🐄💨🍪', text:'A little girl and a cow both tried to catch him too! But the Gingerbread Man laughed and ran even faster.' },
+      { art:'🌊🦊', chars:'🦊😇🍪', text:'At the river, the Gingerbread Man stopped. "How will I cross?" Then a sly fox appeared. "Jump on my tail! I\'ll carry you across!"' },
+      { art:'🦊🌊', chars:'🦊🍪🌊', text:'Halfway across, the fox said: "You\'re getting my tail wet. Jump to my back!" The Gingerbread Man hopped onto the fox\'s back.' },
+      { art:'🦊😋', chars:'🦊😋🍪', text:'"Now jump to my nose!" said the fox. As soon as the Gingerbread Man did — SNAP! The fox ate him all up in one big bite!' },
+      { art:'🌅🌟', chars:'🦊😌', text:'"That\'s what happens when you\'re too proud," the fox smiled. The villagers went home and baked a new gingerbread man — who listened to them this time!' },
+    ]
+  },
+  {
+    id: 'three-goats',
+    title: 'Three Billy Goats Gruff',
+    cover: '🐐🐐🌉',
+    bg: 'linear-gradient(135deg,#55efc4,#00b894)',
+    cardColor: '#27ae60',
+    moral: '"Face your fears together." — Working as a team helps overcome big bullies.',
+    pages: [
+      { art:'🏔️🌿', chars:'🐐🐐🐐', text:'Three billy goats Gruff lived on a hillside. Across the bridge was a lush meadow full of sweet green grass. They longed to cross!' },
+      { art:'🌉😈', chars:'👹🌉', text:'But under the bridge lived a horrible, ugly, giant troll who ate anyone who tried to cross. Nobody dared go near!' },
+      { art:'🐐🌉', chars:'🐐1️⃣👣', text:'The smallest goat went first. Trip-trap, trip-trap! "Who\'s that trip-trapping over my bridge?" roared the troll.' },
+      { art:'🐐💬', chars:'🐐1️⃣💬', text:'"It\'s only me, the tiniest goat! Wait for my bigger brother — he\'s much tastier!" The troll grumbled but let him pass.' },
+      { art:'🐐🌉🧌', chars:'🐐2️⃣👣', text:'The medium goat crossed next. Trip-trap! "Who goes there?" bellowed the troll. "Wait for my BIG brother!" said the goat. The troll waited.' },
+      { art:'🐐💪🌉', chars:'🐐3️⃣💪', text:'Then came the BIG billy goat. TRIP-TRAP! TRIP-TRAP! The bridge shook! "I\'M coming to eat YOU!" roared the troll.' },
+      { art:'🐐🦵💥', chars:'🐐3️⃣💥👹', text:'But the big goat lowered his horns and charged. CRASH! He tossed the troll high into the air and into the river below.' },
+      { art:'🌿🐐🐐🐐', chars:'🐐🐐🐐🎉', text:'All three goats crossed safely and ate the sweetest grass all summer long. The troll was never seen again. Snip, snap, snout — the tale is told out!' },
+    ]
+  },
+  {
+    id: 'hansel-gretel',
+    title: 'Hansel & Gretel',
+    cover: '🏠🍭👦👧',
+    bg: 'linear-gradient(135deg,#fd79a8,#fdcb6e)',
+    cardColor: '#e84393',
+    moral: '"Stay together and use your wits!" — Cleverness can get you out of any trouble.',
+    pages: [
+      { art:'🌲🏡', chars:'👦👧😟', text:'Hansel and Gretel lived with their father and wicked stepmother deep in the woods. One hard winter, there was no food left at all.' },
+      { art:'🌲🌙', chars:'👦🪨', text:'The stepmother planned to leave the children deep in the forest. But clever Hansel collected white pebbles that shone in the moonlight.' },
+      { art:'🌲🌲🌲', chars:'👦👧🪨', text:'As they walked into the dark forest, Hansel dropped pebbles one by one along the path — a glowing trail home.' },
+      { art:'🌕🪨', chars:'👦👧😊', text:'That night, the full moon made the pebbles glow like stars! Hansel and Gretel followed them all the way back home safely.' },
+      { art:'🍭🏠🍬', chars:'👦👧😲', text:'But one day they were lost with no pebbles. Then they spotted the most amazing thing — a house made entirely of candy and cake!' },
+      { art:'🧙😈', chars:'🧙‍♀️😈', text:'Out came a wicked witch who invited them in. She was secretly planning to fatten them up and eat them!' },
+      { art:'🔥🧙', chars:'👧💪🔥', text:'When the witch bent to check the oven — PUSH! Gretel shoved her in and slammed the door! The children were free!' },
+      { art:'💎🏡', chars:'👦👧💎🎉', text:'They found the witch\'s treasure chest, filled their pockets with gems, and found their way home. Their father wept with joy — their stepmother was gone!' },
+    ]
+  },
+  {
+    id: 'sleeping-beauty',
+    title: 'Sleeping Beauty',
+    cover: '👸💤🌹',
+    bg: 'linear-gradient(135deg,#fd79a8,#a29bfe)',
+    cardColor: '#8e44ad',
+    moral: '"Love can break any spell." — True love is patient and never gives up.',
+    pages: [
+      { art:'👶✨🏰', chars:'👶🌟🧚', text:'A beautiful baby princess was born! The kingdom celebrated. Good fairies came to give her magical gifts — beauty, grace, and a kind heart.' },
+      { art:'🧙‍♀️😤', chars:'🧙‍♀️😤', text:'But one wicked fairy hadn\'t been invited! She was furious. "On her 16th birthday, she will prick her finger on a spindle and SLEEP forever!" she cursed.' },
+      { art:'🧚💫', chars:'🧚✨', text:'One good fairy softened the curse. "She won\'t sleep forever — only until a prince\'s kiss wakes her!" she declared.' },
+      { art:'🧵🚫', chars:'👑🚫🧵', text:'The king banned all spindles from the kingdom. The princess grew up happy, kind, and curious — protected and loved.' },
+      { art:'🎂🧵', chars:'👸🎂🧵', text:'On her 16th birthday, the princess explored the castle and found an old tower. An old woman was spinning — it was the wicked fairy in disguise!' },
+      { art:'💤💤', chars:'👸💤🌹', text:'The princess pricked her finger and fell into a deep, deep sleep. The whole palace fell asleep with her. Roses and vines grew up the walls over the years.' },
+      { art:'🌳🏰🤴', chars:'🤴🌳⚔️', text:'One hundred years later, a brave prince heard the legend and cut through the enchanted forest. He found the sleeping princess and kissed her.' },
+      { art:'✨🌅', chars:'👸🤴💑', text:'The princess opened her eyes! The whole castle woke up! Everyone stretched and yawned with surprise. They celebrated, and the prince and princess lived joyfully forever.' },
+    ]
+  },
+];
+
+// ═══════════════════════════════════════════════════════
+//  BUILD LIBRARY
+// ═══════════════════════════════════════════════════════
+const grid = document.getElementById('storyGrid');
+const bgPatterns = [
+  'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.2) 0%, transparent 50%)',
+];
+
+STORIES.forEach((story, i) => {
+  const card = document.createElement('button');
+  card.className = 'story-card';
+  card.style.background = story.cardColor;
+  card.style.backgroundImage = bgPatterns[0];
+  card.innerHTML = `
+    <span class="cover-emoji">${story.cover}</span>
+    <div class="story-title">${story.title}</div>
+  `;
+  card.addEventListener('click', () => openStory(i));
+  grid.appendChild(card);
+});
+
+// ═══════════════════════════════════════════════════════
+//  READER LOGIC
+// ═══════════════════════════════════════════════════════
+let activeStory = null;
+let currentPage = 0;
+
+function openStory(idx) {
+  activeStory = STORIES[idx];
+  currentPage = 0;
+  document.getElementById('readerTitle').textContent = activeStory.title;
+  const reader = document.getElementById('reader');
+  reader.classList.add('open');
+  renderPage();
+}
+
+function closeReader() {
+  document.getElementById('reader').classList.remove('open');
+  activeStory = null;
+}
+
+function changePage(dir) {
+  if (!activeStory) return;
+  const total = activeStory.pages.length;
+  if (dir === 1 && currentPage === total) return;
+  if (dir === -1 && currentPage === 0) return;
+  currentPage += dir;
+  renderPage();
+}
+
+function renderPage() {
+  const story = activeStory;
+  const total = story.pages.length;
+  const sceneArt = document.getElementById('sceneArt');
+  const textBox = document.getElementById('textBox');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const pageCounter = document.getElementById('pageCounter');
+
+  prevBtn.disabled = currentPage === 0;
+
+  if (currentPage === total) {
+    // End card
+    pageCounter.textContent = 'The End!';
+    nextBtn.disabled = true;
+    textBox.style.display = 'none';
+
+    sceneArt.style.background = story.bg;
+    sceneArt.innerHTML = `
+      <div class="end-card">
+        <span class="end-emoji">🎉</span>
+        <h2>The End!</h2>
+        <div class="moral">💡 <strong>Lesson:</strong> ${story.moral}</div>
+        <button class="end-btn" onclick="closeReader()">📚 More Stories</button>
+      </div>
+    `;
+    launchConfetti();
+    return;
+  }
+
+  const page = story.pages[currentPage];
+  pageCounter.textContent = `${currentPage + 1} / ${total}`;
+  nextBtn.disabled = false;
+  nextBtn.textContent = currentPage === total - 1 ? 'Finish 🎉' : 'Next ▶';
+  if (currentPage === total - 1) {
+    nextBtn.style.background = '#ff6b6b';
+  } else {
+    nextBtn.style.background = '#4ecdc4';
+  }
+
+  textBox.style.display = '';
+  sceneArt.style.background = story.bg;
+  sceneArt.innerHTML = `
+    <div class="art-inner">
+      <span class="big-scene" style="animation-delay:0s">${page.art}</span>
+      <span class="scene-chars" style="animation-delay:0.15s">${page.chars}</span>
+    </div>
+  `;
+  textBox.innerHTML = `<p>${page.text}</p>`;
+
+  // Re-trigger animations by cloning
+  const bigScene = sceneArt.querySelector('.big-scene');
+  const sceneChars = sceneArt.querySelector('.scene-chars');
+  void bigScene.offsetWidth;
+  void sceneChars.offsetWidth;
+}
+
+function launchConfetti() {
+  const colors = ['#ff6b6b','#ffd93d','#4ecdc4','#a29bfe','#ff9f43','#55efc4','#fd79a8'];
+  for (let i = 0; i < 45; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.top = '-10px';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.width = (8 + Math.random() * 10) + 'px';
+    el.style.height = (8 + Math.random() * 10) + 'px';
+    el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    el.style.animationDuration = (2 + Math.random() * 3) + 's';
+    el.style.animationDelay = (Math.random() * 0.8) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 5000);
+  }
+}
+
+// Swipe support
+let touchStartX = 0;
+document.getElementById('reader').addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+}, { passive: true });
+document.getElementById('reader').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 60) changePage(dx < 0 ? 1 : -1);
+}, { passive: true });
+</script>
+</body>
+</html>
