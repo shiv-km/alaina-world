@@ -243,6 +243,134 @@
     cursor: pointer;
   }
 
+  /* ── AI image overlay ── */
+  .ai-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 1.3s ease;
+    z-index: 2;
+    border-radius: 0;
+  }
+  .ai-photo.loaded { opacity: 1; }
+  .ai-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 10;
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    padding: 5px 13px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+  }
+  .ai-badge .dot {
+    width: 7px; height: 7px;
+    background: #4ecdc4;
+    border-radius: 50%;
+    animation: dotPulse 1s ease infinite;
+    flex-shrink: 0;
+  }
+  @keyframes dotPulse { 0%,100%{opacity:0.3;transform:scale(0.7)} 50%{opacity:1;transform:scale(1.2)} }
+
+  /* ── AI banner in library ── */
+  .ai-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg,#667eea,#764ba2);
+    color: #fff;
+    border-radius: 18px;
+    padding: 13px 18px;
+    margin-bottom: 20px;
+    cursor: pointer;
+    max-width: 480px;
+    width: 100%;
+    border: none;
+    font-family: inherit;
+    text-align: left;
+    box-shadow: 0 5px 18px rgba(102,126,234,0.35);
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.12s;
+  }
+  .ai-banner:active { transform: scale(0.97); }
+  .ai-banner .bicon  { font-size: 1.7rem; flex-shrink: 0; }
+  .ai-banner .btext  { flex: 1; }
+  .ai-banner .btext strong { display: block; font-size: 0.97rem; }
+  .ai-banner .btext span   { font-size: 0.8rem; opacity: 0.88; }
+  .ai-banner.on { background: linear-gradient(135deg,#11998e,#38ef7d); color: #1a3a2a; }
+  .ai-banner.on .btext span { opacity: 0.75; }
+
+  /* ── Settings modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 600;
+    padding: 20px;
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal-box {
+    background: #fff;
+    border-radius: 28px;
+    padding: 28px 22px 22px;
+    max-width: 440px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+  }
+  .modal-box h2   { font-size: 1.35rem; color: #333; margin-bottom: 8px; }
+  .modal-box .mdesc { color: #666; font-size: 0.88rem; line-height: 1.5; margin-bottom: 14px; }
+  .modal-box input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid #ddd;
+    border-radius: 14px;
+    font-size: 0.92rem;
+    font-family: monospace;
+    outline: none;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .modal-box input:focus { border-color: #667eea; }
+  .show-hide-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 0.78rem; color: #999; padding: 0 2px 12px;
+    font-family: inherit;
+  }
+  .modal-note {
+    font-size: 0.76rem;
+    color: #aaa;
+    background: #f7f7f7;
+    border-radius: 10px;
+    padding: 9px 12px;
+    margin-bottom: 18px;
+    line-height: 1.45;
+  }
+  .modal-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .modal-btns button {
+    flex: 1;
+    min-width: 80px;
+    padding: 12px 10px;
+    border: none;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-save   { background: #667eea; color: #fff; }
+  .btn-remove { background: #ff6b6b; color: #fff; }
+  .btn-cancel { background: #f0f0f0; color: #555; }
+
   /* Confetti burst on end */
   .confetti-piece {
     position: fixed;
@@ -265,7 +393,31 @@
   <a href="index.html" class="back-home">🏠 Back to Alaina's World</a>
   <h1>📖 Story Time!</h1>
   <p class="sub">Choose a story to read</p>
+  <button class="ai-banner" id="aiBanner" onclick="openSettings()">
+    <span class="bicon" id="bannerIcon">🎨</span>
+    <div class="btext">
+      <strong id="bannerTitle">Enable AI Illustrations</strong>
+      <span id="bannerSub">Add your OpenAI key for beautiful AI art on every page</span>
+    </div>
+    <span>⚙️</span>
+  </button>
   <div class="story-grid" id="storyGrid"></div>
+</div>
+
+<!-- ── Settings modal ── -->
+<div class="modal-overlay hidden" id="settingsModal">
+  <div class="modal-box">
+    <h2>🎨 AI Illustration Settings</h2>
+    <p class="mdesc">Paste your <strong>OpenAI API key</strong> to generate a unique watercolor illustration for every story page as you read. Emoji art shows instantly while AI art loads in the background.</p>
+    <input id="apiKeyInput" type="password" placeholder="sk-proj-..." autocomplete="off" spellcheck="false" />
+    <button class="show-hide-btn" onclick="toggleKeyVis()">👁 Show / Hide key</button>
+    <p class="modal-note">🔒 Stored only in your browser. Sent only to api.openai.com. Each image ≈ $0.04 (DALL-E 3 standard 1024×1024).</p>
+    <div class="modal-btns">
+      <button class="btn-save"   onclick="saveSettings()">✓ Save</button>
+      <button class="btn-remove" onclick="removeKey()">✕ Remove Key</button>
+      <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
+    </div>
+  </div>
 </div>
 
 <!-- ── Reader ── -->
@@ -663,11 +815,27 @@ function renderPage() {
   `;
   textBox.innerHTML = `<p>${page.text}</p>`;
 
-  // Re-trigger animations by cloning
-  const bigScene = sceneArt.querySelector('.big-scene');
-  const sceneChars = sceneArt.querySelector('.scene-chars');
-  void bigScene.offsetWidth;
-  void sceneChars.offsetWidth;
+  // Re-trigger animations
+  void sceneArt.querySelector('.big-scene').offsetWidth;
+  void sceneArt.querySelector('.scene-chars').offsetWidth;
+
+  // ── AI image layer ──────────────────────────────────────
+  const ck = imgCacheKey(story.id, currentPage);
+  if (imageCache.has(ck)) {
+    // Already generated this session — show it right away
+    setTimeout(() => showAiImage(sceneArt, imageCache.get(ck)), 80);
+  } else if (loadApiKey()) {
+    // Show loading badge and kick off generation
+    const badge = document.createElement('div');
+    badge.className = 'ai-badge';
+    badge.innerHTML = '<div class="dot"></div> Generating art…';
+    sceneArt.appendChild(badge);
+    generatePageImage(story, currentPage);
+  }
+  // Pre-generate next page silently
+  if (currentPage + 1 < total && loadApiKey()) {
+    generatePageImage(story, currentPage + 1);
+  }
 }
 
 function launchConfetti() {
@@ -687,6 +855,134 @@ function launchConfetti() {
     setTimeout(() => el.remove(), 5000);
   }
 }
+
+// ═══════════════════════════════════════════════════════
+//  AI IMAGE GENERATION
+// ═══════════════════════════════════════════════════════
+const imageCache   = new Map();   // cacheKey → URL (lives for this session)
+const generating   = new Set();   // cacheKeys currently in-flight
+
+function imgCacheKey(storyId, page) { return `${storyId}__${page}`; }
+function loadApiKey()  { return localStorage.getItem('sb_oai_key') || ''; }
+function saveApiKey(k) { localStorage.setItem('sb_oai_key', k); }
+
+function updateBanner() {
+  const hasKey = !!loadApiKey();
+  const banner = document.getElementById('aiBanner');
+  document.getElementById('bannerIcon').textContent  = hasKey ? '✨' : '🎨';
+  document.getElementById('bannerTitle').textContent = hasKey ? 'AI Illustrations ON' : 'Enable AI Illustrations';
+  document.getElementById('bannerSub').textContent   = hasKey
+    ? 'Tap to change or remove your API key'
+    : 'Add your OpenAI key for beautiful AI art on every page';
+  banner.classList.toggle('on', hasKey);
+}
+
+function openSettings() {
+  const inp = document.getElementById('apiKeyInput');
+  inp.value = loadApiKey();
+  inp.type  = 'password';
+  document.getElementById('settingsModal').classList.remove('hidden');
+}
+function closeSettings() { document.getElementById('settingsModal').classList.add('hidden'); }
+function toggleKeyVis() {
+  const inp = document.getElementById('apiKeyInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+function saveSettings() {
+  const k = document.getElementById('apiKeyInput').value.trim();
+  if (k) { saveApiKey(k); imageCache.clear(); }
+  updateBanner();
+  closeSettings();
+}
+function removeKey() {
+  localStorage.removeItem('sb_oai_key');
+  document.getElementById('apiKeyInput').value = '';
+  imageCache.clear();
+  updateBanner();
+  closeSettings();
+}
+
+// Close modal when clicking backdrop
+document.getElementById('settingsModal').addEventListener('click', function(e) {
+  if (e.target === this) closeSettings();
+});
+
+function buildPrompt(story, page) {
+  return (
+    `Whimsical children's storybook illustration for the story "${story.title}". ` +
+    `Scene: ${page.text} ` +
+    `Style: bright vivid watercolor, soft rounded friendly characters, magical warm lighting, ` +
+    `rich saturated colors, highly detailed storybook aesthetic, Disney-Pixar inspired, ` +
+    `safe and joyful for toddlers, absolutely no text or letters anywhere in the image.`
+  );
+}
+
+async function callDallE(prompt) {
+  const res = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${loadApiKey()}`
+    },
+    body: JSON.stringify({
+      model: 'dall-e-3',
+      prompt,
+      n: 1,
+      size: '1024x1024',
+      quality: 'standard',
+      response_format: 'url'
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data.data[0].url;
+}
+
+async function generatePageImage(story, pageIdx) {
+  if (!loadApiKey()) return;
+  const ck = imgCacheKey(story.id, pageIdx);
+  if (imageCache.has(ck) || generating.has(ck)) return;
+
+  generating.add(ck);
+  try {
+    const url = await callDallE(buildPrompt(story, story.pages[pageIdx]));
+    imageCache.set(ck, url);
+    // If user is still looking at this exact page, display it
+    if (activeStory && activeStory.id === story.id && currentPage === pageIdx) {
+      const art = document.getElementById('sceneArt');
+      if (art) showAiImage(art, url);
+    }
+  } catch (err) {
+    console.warn('AI image failed:', err.message);
+    // Remove loading badge if user is still on this page
+    if (activeStory && activeStory.id === story.id && currentPage === pageIdx) {
+      document.querySelector('.ai-badge')?.remove();
+    }
+  } finally {
+    generating.delete(ck);
+  }
+}
+
+function showAiImage(sceneArt, url) {
+  // Remove loading badge
+  sceneArt.querySelector('.ai-badge')?.remove();
+  // Remove any stale photo
+  sceneArt.querySelector('.ai-photo')?.remove();
+
+  const img = document.createElement('img');
+  img.className = 'ai-photo';
+  img.alt = '';
+  img.onload  = () => img.classList.add('loaded');
+  img.onerror = () => img.remove();
+  img.src = url;
+  sceneArt.appendChild(img);
+}
+
+// Initialise banner on load
+updateBanner();
 
 // Swipe support
 let touchStartX = 0;
