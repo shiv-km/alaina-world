@@ -401,6 +401,52 @@
   .btn-remove { background: #ff6b6b; color: #fff; }
   .btn-cancel { background: #f0f0f0; color: #555; }
 
+  /* ── Voice narration button ── */
+  .top-btn.voice { background: #a29bfe; color: #fff; min-width: 44px; }
+  .top-btn.voice.reading { background: #ff6b6b; animation: voicePulse 1.2s ease infinite; }
+  @keyframes voicePulse { 0%,100%{opacity:1} 50%{opacity:0.65} }
+
+  /* ── Create-story modal ── */
+  .create-box { max-height: 88vh; overflow-y: auto; }
+  .field-group { margin-bottom: 16px; }
+  .field-label { display: block; font-weight: 800; color: #444; margin-bottom: 7px; font-size: 0.86rem; letter-spacing: 0.02em; }
+  .field-input {
+    width: 100%; padding: 11px 14px; border: 2px solid #ddd; border-radius: 14px;
+    font-family: inherit; font-size: 0.95rem; outline: none;
+  }
+  .field-input:focus { border-color: #667eea; }
+  .picker-row { display: flex; flex-wrap: wrap; gap: 7px; }
+  .picker-chip {
+    padding: 7px 13px; border-radius: 100px; border: 2px solid #ddd;
+    background: #fff; cursor: pointer; font-size: 0.88rem; font-weight: 700;
+    transition: all 0.14s; font-family: inherit; color: #333;
+  }
+  .picker-chip.on { border-color: #667eea; background: #eef2ff; color: #4040cc; }
+  .picker-chip:active { transform: scale(0.92); }
+  .create-cta {
+    width: 100%; padding: 14px; border: none; border-radius: 18px;
+    background: linear-gradient(135deg,#667eea,#764ba2);
+    color: #fff; font-size: 1rem; font-weight: 800;
+    cursor: pointer; margin-bottom: 8px; font-family: inherit;
+    transition: opacity 0.15s;
+  }
+  .create-cta:disabled { opacity: 0.55; cursor: default; }
+  .modal-spinner {
+    width: 46px; height: 46px; border: 5px solid #f0f0f0;
+    border-top-color: #667eea; border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 0 auto 14px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .custom-badge {
+    display: inline-block; background: linear-gradient(135deg,#667eea,#764ba2);
+    color: #fff; font-size: 0.58rem; font-weight: 800; padding: 2px 7px;
+    border-radius: 100px; margin-top: 4px; vertical-align: middle;
+  }
+  .create-banner {
+    background: linear-gradient(135deg,#764ba2,#f64f59) !important;
+    margin-bottom: 12px;
+  }
+
   /* Confetti burst on end */
   .confetti-piece {
     position: fixed;
@@ -436,6 +482,14 @@
     </div>
     <span>⚙️</span>
   </button>
+  <button class="ai-banner create-banner" onclick="openCreate()">
+    <span class="bicon">✨</span>
+    <div class="btext">
+      <strong>Create My Own Story!</strong>
+      <span>AI writes a personalized story just for you</span>
+    </div>
+    <span>→</span>
+  </button>
   <div class="story-grid" id="storyGrid"></div>
 </div>
 
@@ -455,12 +509,49 @@
   </div>
 </div>
 
+<!-- ── Create-story modal ── -->
+<div class="modal-overlay hidden" id="createModal">
+  <div class="modal-box create-box">
+    <h2>✨ Create My Story</h2>
+    <p class="mdesc">Tell me about your story and AI will write it just for you!</p>
+
+    <div id="create-form">
+      <div class="field-group">
+        <label class="field-label">Hero's name</label>
+        <input class="field-input" id="heroName" type="text" placeholder="Alaina, Max, Lily…" maxlength="20">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Hero is a…</label>
+        <div class="picker-row" id="charPicker"></div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Story happens in…</label>
+        <div class="picker-row" id="settingPicker"></div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Story is about…</label>
+        <div class="picker-row" id="themePicker"></div>
+      </div>
+      <div class="modal-btns" style="flex-direction:column;gap:8px">
+        <button class="create-cta" id="createCta" onclick="generateStory()">✨ Write My Story!</button>
+        <button class="btn-cancel" onclick="closeCreate()">Cancel</button>
+      </div>
+    </div>
+
+    <div id="create-loading" style="display:none;text-align:center;padding:24px 0">
+      <div class="modal-spinner"></div>
+      <p id="createMsg" style="color:#666;font-weight:700;font-size:0.9rem">Writing your story…</p>
+    </div>
+  </div>
+</div>
+
 <!-- ── Reader ── -->
 <div id="reader">
   <div class="reader-top">
     <button class="top-btn exit" onclick="closeReader()">✕ Stories</button>
     <span class="r-title" id="readerTitle"></span>
     <button class="top-btn pg"   id="pageCounter"></button>
+    <button class="top-btn voice" id="voiceBtn" onclick="toggleVoice()" title="Read to me">🔊</button>
   </div>
   <div class="scene-wrap">
     <div class="scene-art" id="sceneArt"></div>
@@ -754,22 +845,39 @@ const STORIES = [
 //  BUILD LIBRARY
 // ═══════════════════════════════════════════════════════
 const grid = document.getElementById('storyGrid');
-const bgPatterns = [
-  'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.2) 0%, transparent 50%)',
-];
+const bgPattern = 'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.2) 0%, transparent 50%)';
+let customStories = [];
+try { customStories = JSON.parse(localStorage.getItem('aw_custom_stories') || '[]'); } catch(e) {}
 
-STORIES.forEach((story, i) => {
-  const card = document.createElement('button');
-  card.className = 'story-card';
-  card.style.background = story.cardColor;
-  card.style.backgroundImage = bgPatterns[0];
-  card.innerHTML = `
-    <span class="cover-emoji">${story.cover}</span>
-    <div class="story-title">${story.title}</div>
-  `;
-  card.addEventListener('click', () => openStory(i));
-  grid.appendChild(card);
-});
+function buildLibrary() {
+  grid.innerHTML = '';
+  STORIES.forEach((story, i) => {
+    const card = document.createElement('button');
+    card.className = 'story-card';
+    card.style.background = story.cardColor;
+    card.style.backgroundImage = bgPattern;
+    card.innerHTML = `
+      <span class="cover-emoji">${story.cover}</span>
+      <div class="story-title">${story.title}</div>
+    `;
+    card.addEventListener('click', () => openStory(story));
+    grid.appendChild(card);
+  });
+  customStories.forEach(story => {
+    const card = document.createElement('button');
+    card.className = 'story-card';
+    card.style.background = story.cardColor || '#667eea';
+    card.style.backgroundImage = bgPattern;
+    card.innerHTML = `
+      <span class="cover-emoji">${story.cover}</span>
+      <div class="story-title">${story.title}</div>
+      <span class="custom-badge">✨ My Story</span>
+    `;
+    card.addEventListener('click', () => openStory(story));
+    grid.appendChild(card);
+  });
+}
+buildLibrary();
 
 // ═══════════════════════════════════════════════════════
 //  READER LOGIC
@@ -777,9 +885,10 @@ STORIES.forEach((story, i) => {
 let activeStory = null;
 let currentPage = 0;
 
-function openStory(idx) {
-  activeStory = STORIES[idx];
+function openStory(storyOrIdx) {
+  activeStory = typeof storyOrIdx === 'number' ? STORIES[storyOrIdx] : storyOrIdx;
   currentPage = 0;
+  stopVoice();
   document.getElementById('readerTitle').textContent = activeStory.title;
   const reader = document.getElementById('reader');
   reader.classList.add('open');
@@ -787,6 +896,7 @@ function openStory(idx) {
 }
 
 function closeReader() {
+  stopVoice();
   document.getElementById('reader').classList.remove('open');
   activeStory = null;
 }
@@ -1018,6 +1128,169 @@ function showAiImage(sceneArt, url) {
 
 // Initialise banner on load
 updateBanner();
+
+// ═══════════════════════════════════════════════════════
+//  VOICE NARRATION
+// ═══════════════════════════════════════════════════════
+let voiceReading = false;
+
+function toggleVoice() {
+  if (voiceReading) stopVoice(); else startVoice();
+}
+function startVoice() {
+  if (!activeStory) return;
+  const page = activeStory.pages[currentPage];
+  if (!page || !page.text) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(page.text);
+  utt.pitch = 1.25; utt.rate = 0.88;
+  const voices = window.speechSynthesis.getVoices();
+  const nice = voices.find(v => v.lang.startsWith('en') && /female|samantha|karen|moira|victoria|fiona|veena/i.test(v.name))
+            || voices.find(v => v.lang.startsWith('en'));
+  if (nice) utt.voice = nice;
+  utt.onend = utt.onerror = () => { voiceReading = false; refreshVoiceBtn(); };
+  window.speechSynthesis.speak(utt);
+  voiceReading = true;
+  refreshVoiceBtn();
+}
+function stopVoice() {
+  window.speechSynthesis.cancel();
+  voiceReading = false;
+  refreshVoiceBtn();
+}
+function refreshVoiceBtn() {
+  const btn = document.getElementById('voiceBtn');
+  if (!btn) return;
+  btn.textContent = voiceReading ? '⏹' : '🔊';
+  btn.classList.toggle('reading', voiceReading);
+}
+// Voices load async on some browsers
+window.speechSynthesis.onvoiceschanged = () => {};
+
+// ═══════════════════════════════════════════════════════
+//  AI STORY CREATOR
+// ═══════════════════════════════════════════════════════
+const CHAR_OPTS = [
+  {e:'🦕',n:'dinosaur'},{e:'🐉',n:'dragon'},{e:'🐰',n:'bunny'},
+  {e:'🤖',n:'robot'},{e:'🦄',n:'unicorn'},{e:'🧚',n:'fairy'},
+  {e:'🐼',n:'panda'},{e:'🦊',n:'fox'},{e:'🐸',n:'frog'},{e:'🦁',n:'lion'},
+];
+const SETTING_OPTS = [
+  {e:'🌲',n:'enchanted forest'},{e:'🚀',n:'outer space'},{e:'🏰',n:'magical castle'},
+  {e:'🌊',n:'underwater ocean'},{e:'🏔️',n:'snowy mountains'},{e:'🌆',n:'rainbow city'},
+  {e:'☁️',n:'cloud kingdom'},{e:'🌋',n:'volcanic island'},
+];
+const THEME_OPTS = [
+  {e:'🤝',n:'friendship'},{e:'💪',n:'bravery'},
+  {e:'🔍',n:'a mystery to solve'},{e:'🌱',n:'learning to share'},
+];
+
+let selChar = 0, selSetting = 0, selTheme = 0;
+
+function openCreate() {
+  if (!loadApiKey()) { openSettings(); return; }
+  document.getElementById('create-form').style.display = '';
+  document.getElementById('create-loading').style.display = 'none';
+  buildCreatePickers();
+  document.getElementById('createModal').classList.remove('hidden');
+}
+function closeCreate() { document.getElementById('createModal').classList.add('hidden'); }
+
+document.getElementById('createModal').addEventListener('click', function(e) {
+  if (e.target === this) closeCreate();
+});
+
+function buildCreatePickers() {
+  buildPRow('charPicker',    CHAR_OPTS,    () => selChar,    i => { selChar = i; });
+  buildPRow('settingPicker', SETTING_OPTS, () => selSetting, i => { selSetting = i; });
+  buildPRow('themePicker',   THEME_OPTS,   () => selTheme,   i => { selTheme = i; });
+}
+function buildPRow(id, opts, getIdx, setIdx) {
+  const row = document.getElementById(id);
+  row.innerHTML = '';
+  opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'picker-chip' + (i === getIdx() ? ' on' : '');
+    btn.textContent = opt.e + ' ' + opt.n;
+    btn.type = 'button';
+    btn.onclick = () => {
+      row.querySelectorAll('.picker-chip').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      setIdx(i);
+    };
+    row.appendChild(btn);
+  });
+}
+
+async function generateStory() {
+  if (!loadApiKey()) { openSettings(); return; }
+  const heroName = (document.getElementById('heroName').value.trim() || 'Alaina').slice(0,20);
+  const char    = CHAR_OPTS[selChar];
+  const setting = SETTING_OPTS[selSetting];
+  const theme   = THEME_OPTS[selTheme];
+
+  document.getElementById('create-form').style.display = 'none';
+  document.getElementById('create-loading').style.display = '';
+  document.getElementById('createMsg').textContent = 'Writing your story…';
+
+  try {
+    const storyPrompt =
+      `Write a 5-page children's story (ages 3-7) with these details:\n` +
+      `- Hero: ${heroName} the ${char.n}\n` +
+      `- Setting: ${setting.n}\n` +
+      `- Theme: ${theme.n}\n\n` +
+      `Return ONLY a JSON object exactly like this (no extra text):\n` +
+      `{"title":"...","moral":"one sentence lesson","pages":[` +
+      `{"art":"2-3 emojis","chars":"1-3 character emojis","text":"2-3 simple sentences"},` +
+      `{"art":"...","chars":"...","text":"..."},` +
+      `{"art":"...","chars":"...","text":"..."},` +
+      `{"art":"...","chars":"...","text":"..."},` +
+      `{"art":"...","chars":"...","text":"..."}]}`;
+
+    const chatRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${loadApiKey()}` },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'You write children\'s stories. Output only valid JSON.' },
+          { role: 'user',   content: storyPrompt }
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.9, max_tokens: 1200,
+      })
+    });
+    if (!chatRes.ok) { const e = await chatRes.json().catch(()=>({})); throw new Error(e.error?.message||`HTTP ${chatRes.status}`); }
+    const chatData = await chatRes.json();
+    const gen = JSON.parse(chatData.choices[0].message.content);
+
+    const hues = [Math.random()*360, Math.random()*360];
+    const story = {
+      id:       'custom_' + Date.now(),
+      title:    gen.title || `${heroName}'s Adventure`,
+      cover:    char.e + setting.e,
+      bg:       `linear-gradient(135deg,hsl(${hues[0]},65%,60%),hsl(${hues[1]},65%,50%))`,
+      cardColor:`hsl(${hues[0]},55%,48%)`,
+      moral:    gen.moral || 'Be yourself!',
+      pages:    (gen.pages || []).slice(0,5),
+      isCustom: true,
+    };
+
+    customStories.push(story);
+    localStorage.setItem('aw_custom_stories', JSON.stringify(customStories));
+    closeCreate();
+    buildLibrary();
+    openStory(story);
+
+  } catch (err) {
+    console.error('Story gen failed:', err);
+    document.getElementById('createMsg').textContent = '❌ ' + err.message;
+    setTimeout(() => {
+      document.getElementById('create-form').style.display = '';
+      document.getElementById('create-loading').style.display = 'none';
+    }, 3000);
+  }
+}
 
 // Swipe support
 let touchStartX = 0;

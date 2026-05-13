@@ -339,6 +339,78 @@
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
         /* ═══════════════════════════════════════
+           PROFILE MODAL
+        ═══════════════════════════════════════ */
+        .pmodal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.52);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 800; padding: 20px;
+        }
+        .pmodal-overlay.hidden { display: none; }
+        .pmodal-box {
+            background: #fff; border-radius: 28px; padding: 26px 20px 20px;
+            max-width: 370px; width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .pmodal-box h2 {
+            font-family: 'Fredoka One', sans-serif; color: var(--purple);
+            margin-bottom: 18px; font-size: 1.4rem;
+        }
+        .pstats { display: flex; gap: 9px; margin-bottom: 20px; }
+        .pstat {
+            flex: 1; text-align: center; background: var(--bg);
+            border-radius: 14px; padding: 11px 6px;
+        }
+        .pstat-val {
+            display: block; font-family: 'Fredoka One', sans-serif;
+            font-size: 1.55rem; color: var(--purple); line-height: 1.1;
+        }
+        .pstat-lbl { font-size: 0.66rem; font-weight: 800; color: var(--muted); }
+        .pfield { margin-bottom: 16px; }
+        .pfield label {
+            display: block; font-weight: 800; font-size: 0.8rem;
+            color: var(--muted); margin-bottom: 7px; letter-spacing: 0.03em;
+        }
+        .pfield input {
+            width: 100%; padding: 10px 14px; border: 2px solid var(--border);
+            border-radius: 14px; font-family: inherit; font-size: 0.95rem; outline: none;
+        }
+        .pfield input:focus { border-color: var(--purple); }
+        .av-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .av-chip {
+            font-size: 1.55rem; padding: 7px; border-radius: 13px;
+            border: 3px solid transparent; background: var(--bg);
+            cursor: pointer; line-height: 1; transition: border-color 0.12s, transform 0.1s;
+        }
+        .av-chip.on { border-color: var(--purple); background: rgba(124,92,191,0.1); }
+        .av-chip:active { transform: scale(0.85); }
+        .pmodal-btns { display: flex; gap: 8px; margin-top: 6px; }
+        .pmodal-btns button {
+            flex: 1; padding: 12px; border: none; border-radius: 14px;
+            font-family: inherit; font-size: 0.9rem; font-weight: 800; cursor: pointer;
+        }
+        .pbtn-save  { background: var(--purple); color: #fff; }
+        .pbtn-close { background: var(--bg); color: var(--text); }
+
+        /* ── Coloring Studio card ── */
+        .color-studio-card {
+            width: 100%; border-radius: var(--r-lg);
+            background: linear-gradient(135deg,#FF8C42 0%,#FFC83D 100%);
+            padding: 20px; border: none; cursor: pointer;
+            box-shadow: var(--shadow-md); font-family: inherit;
+            display: flex; align-items: center; gap: 14px;
+            position: relative; overflow: hidden; text-align: left;
+            transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;
+            margin-top: 11px;
+        }
+        .color-studio-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+        .color-studio-card:active { transform: scale(0.97); }
+        .csc-icon { font-size: 2.6rem; flex-shrink: 0; }
+        .csc-text h3 { font-family: 'Fredoka One', sans-serif; font-size: 1.25rem; color: #fff; margin-bottom: 2px; }
+        .csc-text p  { font-size: 0.8rem; color: rgba(255,255,255,0.88); font-weight: 700; }
+
+        /* ═══════════════════════════════════════
            RESPONSIVE
         ═══════════════════════════════════════ */
         @media (min-width: 640px) {
@@ -368,7 +440,7 @@
         <div class="h-logo">🌟 <em>Alaina's</em> World</div>
         <div class="h-right">
             <div class="stars-pill" aria-label="Stars collected">⭐ <span id="starsCount">0</span></div>
-            <button class="h-profile" aria-label="Profile" onclick="showToast('👤 Profiles coming soon!')">👤</button>
+            <button class="h-profile" id="profileBtn" aria-label="Profile" onclick="openProfile()">👤</button>
         </div>
     </header>
 
@@ -404,6 +476,30 @@
 
 <!-- ── TOAST ── -->
 <div id="toast" role="status" aria-live="polite"></div>
+
+<!-- ── PROFILE MODAL ── -->
+<div id="profile-modal" class="pmodal-overlay hidden" role="dialog" aria-modal="true" aria-label="My Profile">
+    <div class="pmodal-box">
+        <h2>👤 My Profile</h2>
+        <div class="pstats">
+            <div class="pstat"><span class="pstat-val" id="pm-stars">0</span><span class="pstat-lbl">⭐ Stars</span></div>
+            <div class="pstat"><span class="pstat-val" id="pm-streak">0</span><span class="pstat-lbl">🔥 Streak</span></div>
+            <div class="pstat"><span class="pstat-val" id="pm-played">0</span><span class="pstat-lbl">🎮 Games</span></div>
+        </div>
+        <div class="pfield">
+            <label>My Name</label>
+            <input id="pm-name" type="text" maxlength="20" placeholder="Alaina">
+        </div>
+        <div class="pfield">
+            <label>My Avatar</label>
+            <div class="av-grid" id="av-grid"></div>
+        </div>
+        <div class="pmodal-btns">
+            <button class="pbtn-save" onclick="saveProfile()">✓ Save</button>
+            <button class="pbtn-close" onclick="closeProfile()">Close</button>
+        </div>
+    </div>
+</div>
 
 <script>
 // ═══════════════════════════════════════════════
@@ -548,6 +644,13 @@ GAME_SECTIONS.forEach(s => s.games.forEach(g => { GAME_NAMES[g.mode] = g.name; }
             </div>
             <span class="sm-arrow" aria-hidden="true">›</span>
         </button>
+        <button class="color-studio-card" onclick="goColoring()" aria-label="Coloring Studio — AI draws coloring pages for you to color">
+            <span class="csc-icon" aria-hidden="true">🎨</span>
+            <div class="csc-text">
+                <h3>Coloring Studio!</h3>
+                <p>AI draws · 8 themes · Paint & save</p>
+            </div>
+        </button>
     `;
     hub.appendChild(storiesBlock);
 })();
@@ -610,9 +713,60 @@ function checkAndUpdateStreak() {
 }
 setTimeout(checkAndUpdateStreak, 4200);
 
+// ── Profile system ───────────────────────────
+const AVATAR_OPTS = ['🐱','🐶','🦁','🐸','🐼','🦊','🐨','🐯','🦋','🌸','⭐','🌈','🚀','🎨','🎵','👑','🦄','🐉','🌟','🎀'];
+let playerName   = localStorage.getItem('aw_name')   || 'Alaina';
+let playerAvatar = localStorage.getItem('aw_avatar') || '⭐';
+let gamesPlayed  = parseInt(localStorage.getItem('aw_games_played') || '0');
+
+function updateProfileBtn() {
+    const btn = document.getElementById('profileBtn');
+    if (btn) btn.textContent = playerAvatar;
+}
+updateProfileBtn();
+
+function openProfile() {
+    document.getElementById('pm-name').value   = playerName;
+    document.getElementById('pm-stars').textContent  = totalStars;
+    document.getElementById('pm-streak').textContent = localStorage.getItem('aw_streak') || '0';
+    document.getElementById('pm-played').textContent = gamesPlayed;
+    buildAvatarGrid();
+    document.getElementById('profile-modal').classList.remove('hidden');
+}
+function closeProfile() {
+    document.getElementById('profile-modal').classList.add('hidden');
+}
+function buildAvatarGrid() {
+    const g = document.getElementById('av-grid');
+    g.innerHTML = '';
+    AVATAR_OPTS.forEach(av => {
+        const btn = document.createElement('button');
+        btn.className = 'av-chip' + (av === playerAvatar ? ' on' : '');
+        btn.textContent = av;
+        btn.onclick = () => {
+            g.querySelectorAll('.av-chip').forEach(b => b.classList.remove('on'));
+            btn.classList.add('on');
+            playerAvatar = av;
+        };
+        g.appendChild(btn);
+    });
+}
+function saveProfile() {
+    playerName = (document.getElementById('pm-name').value.trim() || 'Alaina').slice(0, 20);
+    localStorage.setItem('aw_name', playerName);
+    localStorage.setItem('aw_avatar', playerAvatar);
+    updateProfileBtn();
+    closeProfile();
+    showToast(`✨ Hi ${playerName}! Profile saved!`);
+}
+document.getElementById('profile-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeProfile();
+});
+
 // ── Nav helpers ──────────────────────────────
 function scrollToHubTop() { document.getElementById('hub').scrollTo({ top: 0, behavior: 'smooth' }); }
 function goStories()       { window.location.href = 'storybook.html'; }
+function goColoring()      { window.location.href = 'coloring.html'; }
 
 // ═══════════════════════════════════════════════
 //  DOM REFS
@@ -964,6 +1118,8 @@ function colorMatchNewRound() {
 // ═══════════════════════════════════════════════
 function startGame(m) {
     unlockAudio();
+    gamesPlayed++;
+    localStorage.setItem('aw_games_played', gamesPlayed);
     appEl.classList.add('hidden');
     container.style.display = 'block';
     gameBar.classList.add('on');
