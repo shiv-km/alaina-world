@@ -2,89 +2,119 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Story Time — 15 classic children's stories with optional AI illustrations. Part of Alaina's World.">
+<meta name="theme-color" content="#7C5CBF">
 <title>Story Time 📖 — Alaina's World</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #fff9f0;
-    --btn-radius: 22px;
+    --bg: #FFF8F0;
+    --purple: #7C5CBF;
+    --pink:   #FF6B9D;
+    --yellow: #FFC83D;
+    --text:   #2D1B69;
+    --muted:  #8B7CAB;
+    --border: rgba(124,92,191,0.12);
+    --shadow-sm: 0 2px 10px rgba(45,27,105,0.09);
+    --shadow-md: 0 8px 28px rgba(45,27,105,0.14);
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
   }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body {
-    font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+    font-family: 'Nunito', 'Arial Rounded MT Bold', sans-serif;
     background: var(--bg);
+    color: var(--text);
     min-height: 100vh;
     overflow-x: hidden;
   }
+  button { font-family: inherit; }
+
+  /* ── Page header ── */
+  .page-header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,248,240,0.94);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: calc(var(--safe-t) + 12px) 16px 12px;
+    gap: 10px;
+  }
+  .ph-logo {
+    font-family: 'Fredoka One', sans-serif;
+    font-size: 1.3rem; color: var(--purple);
+  }
+  .ph-logo em { font-style: normal; color: var(--pink); }
+  .back-home {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    border-radius: 100px;
+    font-size: 0.82rem; font-weight: 800; color: #fff;
+    cursor: pointer; text-decoration: none; border: none;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+  }
+  .back-home:active { transform: scale(0.93); box-shadow: none; }
 
   /* ── Library screen ── */
   #library {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px 16px 60px;
+    padding: 24px 14px calc(var(--safe-b) + 40px);
   }
   #library h1 {
+    font-family: 'Fredoka One', sans-serif;
     font-size: clamp(1.8rem, 6vw, 3rem);
-    color: #ff6b6b;
-    text-shadow: 0 3px 0 #ffd93d;
-    margin-bottom: 6px;
+    color: var(--purple);
+    margin-bottom: 4px;
     text-align: center;
   }
   #library p.sub {
-    color: #888;
-    font-size: 1rem;
-    margin-bottom: 24px;
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 22px;
   }
   .story-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    gap: 12px;
     width: 100%;
     max-width: 900px;
   }
   .story-card {
-    border-radius: 22px;
-    padding: 20px 12px 16px;
+    border-radius: 20px;
+    padding: 18px 12px 14px;
     cursor: pointer;
     text-align: center;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.13);
-    transition: transform 0.15s, box-shadow 0.15s;
-    -webkit-tap-highlight-color: transparent;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s;
     user-select: none;
     border: none;
     outline: none;
   }
-  .story-card:active { transform: scale(0.95); }
+  .story-card:hover { transform: translateY(-3px) scale(1.02); box-shadow: var(--shadow-md); }
+  .story-card:active { transform: scale(0.93); box-shadow: none; }
   .story-card .cover-emoji {
-    font-size: 3.8rem;
+    font-size: 3.5rem;
     line-height: 1.1;
     display: block;
     margin-bottom: 10px;
-    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.18));
+    filter: drop-shadow(0 3px 5px rgba(0,0,0,0.2));
   }
   .story-card .story-title {
-    font-size: 0.88rem;
-    font-weight: bold;
+    font-size: 0.82rem;
+    font-weight: 800;
     color: #fff;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.3);
     line-height: 1.25;
   }
-  .back-home {
-    display: inline-block;
-    margin-bottom: 20px;
-    padding: 10px 22px;
-    background: #fff;
-    border: 3px solid #ff6b6b;
-    border-radius: 20px;
-    font-size: 0.95rem;
-    font-weight: bold;
-    color: #ff6b6b;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    text-decoration: none;
-  }
-  .back-home:active { transform: scale(0.95); }
 
   /* ── Story reader ── */
   #reader {
@@ -388,9 +418,14 @@
 </head>
 <body>
 
+<!-- ── Page Header ── -->
+<header class="page-header">
+  <div class="ph-logo">🌟 <em>Alaina's</em> World</div>
+  <a href="index.html" class="back-home">🏠 Back to Games</a>
+</header>
+
 <!-- ── Library ── -->
 <div id="library">
-  <a href="index.html" class="back-home">🏠 Back to Alaina's World</a>
   <h1>📖 Story Time!</h1>
   <p class="sub">Choose a story to read</p>
   <button class="ai-banner" id="aiBanner" onclick="openSettings()">
