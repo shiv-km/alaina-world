@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://shiv-km.github.io/alaina-world/sitemap.xml

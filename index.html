@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Alaina's World — 21 free games, 15 stories, music & learning for kids. No downloads, no logins. Open and play instantly!">
-    <meta name="keywords" content="kids games, children games, educational games, free games for kids, toddler games, learning games">
+    <meta name="description" content="Alaina's World — 28 free games, 15 stories, coloring studio & learning for kids ages 2–8. No ads, no accounts. Open and play instantly!">
+    <meta name="keywords" content="kids games, children games, educational games, free games for kids, toddler games, learning games, kids coloring, kids stories">
     <meta property="og:title" content="Alaina's World 🌟 — Free Kids Games & Stories">
-    <meta property="og:description" content="21 games, 15 stories, music & learning. Free forever, no downloads needed.">
+    <meta property="og:description" content="28 games, 15 stories, coloring studio & learning. Free forever, no ads, no accounts.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://shiv-km.github.io/alaina-world/">
     <meta name="twitter:card" content="summary_large_image">
@@ -18,6 +18,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"WebApplication","name":"Alaina's World","url":"https://shiv-km.github.io/alaina-world/","applicationCategory":"GameApplication","genre":"Educational","description":"28 free games, 15 classic stories, and a coloring studio for kids ages 2–8. No ads, no accounts required.","audience":{"@type":"EducationalAudience","typicalAgeRange":"2-8"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"operatingSystem":"Any","browserRequirements":"Requires a modern web browser","featureList":["28 mini-games","15 classic stories","AI coloring studio","Voice narration","No advertisements","No account required"]}
+    </script>
     <style>
         /* ═══════════════════════════════════════
            DESIGN TOKENS
@@ -413,13 +416,123 @@
         /* ═══════════════════════════════════════
            RESPONSIVE
         ═══════════════════════════════════════ */
+        /* ── Site footer ── */
+        .site-footer {
+            text-align: center; padding: 24px 16px 12px;
+            border-top: 1.5px solid var(--border);
+            margin-top: 28px; display: flex; flex-wrap: wrap;
+            justify-content: center; gap: 6px 14px;
+        }
+        .site-footer a {
+            color: var(--muted); font-size: 0.78rem; font-weight: 700;
+            text-decoration: none; white-space: nowrap;
+            transition: color 0.15s;
+        }
+        .site-footer a:hover { color: var(--purple); }
+
+        /* ── Rewards screen ── */
+        #rewards-screen {
+            flex: 1; overflow-y: auto; overscroll-behavior: none;
+            padding-bottom: calc(var(--nav-h) + var(--safe-b) + 20px);
+            display: none;
+        }
+        #rewards-screen.active { display: block; }
+
+        .rw-hero {
+            background: linear-gradient(135deg,#FFC83D 0%,#FF8C42 100%);
+            padding: 28px 20px 48px; text-align: center;
+            position: relative; overflow: hidden;
+        }
+        .rw-hero::after {
+            content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
+            height: 32px; background: var(--bg); border-radius: 32px 32px 0 0;
+        }
+        .rw-hero h2 {
+            font-family: 'Fredoka One', sans-serif;
+            font-size: clamp(1.5rem,5vw,2.2rem);
+            color: #fff; text-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            margin-bottom: 4px;
+        }
+        .rw-stars-big {
+            font-family: 'Fredoka One', sans-serif;
+            font-size: clamp(3rem,12vw,5rem); color: #fff;
+            display: block; text-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            line-height: 1.1; margin-bottom: 4px;
+        }
+        .rw-sub { color: rgba(255,255,255,0.82); font-size: 0.85rem; font-weight: 700; }
+
+        .rw-section { padding: 20px 14px 0; }
+        .rw-section h3 {
+            font-family: 'Fredoka One', sans-serif; font-size: 1.15rem;
+            color: var(--text); margin-bottom: 12px;
+            display: flex; align-items: center; gap: 7px;
+        }
+
+        .daily-card {
+            background: #fff; border-radius: 20px; padding: 16px 18px;
+            box-shadow: var(--shadow-sm); display: flex; align-items: center; gap: 12px;
+        }
+        .daily-icon { font-size: 2.6rem; flex-shrink: 0; line-height: 1; }
+        .daily-text h4 { font-weight: 800; font-size: 0.92rem; color: var(--text); margin-bottom: 2px; }
+        .daily-text p  { font-size: 0.76rem; color: var(--muted); font-weight: 600; }
+        .daily-btn {
+            margin-left: auto; flex-shrink: 0;
+            padding: 10px 18px; border: none; border-radius: 100px;
+            font-family: inherit; font-weight: 800; font-size: 0.82rem;
+            background: linear-gradient(135deg,var(--yellow),var(--orange));
+            color: #fff; box-shadow: 0 4px 14px rgba(255,140,66,0.35);
+            transition: transform 0.15s, opacity 0.2s; cursor: pointer;
+        }
+        .daily-btn:disabled { opacity: 0.42; background: var(--muted); box-shadow: none; cursor: default; }
+        .daily-btn:not(:disabled):active { transform: scale(0.92); }
+
+        .milestone-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+        .milestone-badge {
+            flex: 1; min-width: 72px; border-radius: 16px;
+            background: #fff; box-shadow: var(--shadow-sm);
+            padding: 14px 8px; text-align: center;
+            transition: transform 0.15s;
+        }
+        .milestone-badge.earned {
+            background: linear-gradient(135deg,var(--purple),var(--pink));
+        }
+        .mb-icon { font-size: 1.8rem; display: block; margin-bottom: 4px; }
+        .mb-val { font-family: 'Fredoka One', sans-serif; font-size: 0.88rem; color: var(--purple); display: block; }
+        .mb-lbl { font-size: 0.6rem; font-weight: 800; color: var(--muted); }
+        .milestone-badge.earned .mb-val { color: #fff; }
+        .milestone-badge.earned .mb-lbl { color: rgba(255,255,255,0.75); }
+
+        .unlock-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+        .unlock-card {
+            border-radius: 18px; overflow: hidden; position: relative;
+            box-shadow: var(--shadow-sm); border: none; cursor: pointer;
+            text-align: center; font-family: inherit; padding: 0;
+            transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .unlock-card:active { transform: scale(0.94); }
+        .uc-art { height: 76px; display: flex; align-items: center; justify-content: center; font-size: 2.4rem; }
+        .uc-body { background: #fff; padding: 9px 8px 11px; }
+        .uc-name { font-weight: 800; font-size: 0.78rem; color: var(--text); margin-bottom: 4px; }
+        .uc-cost { font-size: 0.7rem; font-weight: 800; color: var(--muted);
+            display: flex; align-items: center; justify-content: center; gap: 3px; }
+        .uc-cost.done { color: var(--teal); }
+        .unlock-card.locked-theme .uc-art::after {
+            content: '🔒'; position: absolute; font-size: 1.6rem;
+            top: 50%; left: 50%; transform: translate(-50%,-50%);
+            background: rgba(0,0,0,0.42); border-radius: 50%; padding: 6px;
+            line-height: 1;
+        }
+        .unlock-card.locked-theme .uc-art { position: relative; opacity: 0.55; }
+
         @media (min-width: 640px) {
             .game-grid { grid-template-columns: repeat(auto-fill, minmax(158px,1fr)); }
             .gc-art { height: 96px; font-size: 3.2rem; }
+            .unlock-grid { grid-template-columns: repeat(4,1fr); }
         }
         @media (min-width: 900px) {
             #bottom-nav { display: none; }
             #hub { padding-bottom: 40px; }
+            #rewards-screen { padding-bottom: 40px; }
             .game-grid { grid-template-columns: repeat(auto-fill, minmax(168px,1fr)); gap: 14px; }
             .section-block { padding: 26px 20px 0; }
         }
@@ -445,15 +558,16 @@
     </header>
 
     <main id="hub" role="main"></main>
+    <main id="rewards-screen" role="main" aria-label="Rewards"></main>
 
     <nav id="bottom-nav" aria-label="Main navigation">
-        <button class="nav-btn on" onclick="scrollToHubTop()" aria-label="Games">
+        <button class="nav-btn on" id="nav-games" onclick="showTab('hub')" aria-label="Games">
             <span class="ni">🎮</span><span class="nl">Games</span>
         </button>
         <button class="nav-btn" onclick="goStories()" aria-label="Stories">
             <span class="ni">📖</span><span class="nl">Stories</span>
         </button>
-        <button class="nav-btn" onclick="showToast('🏆 Rewards coming soon!')" aria-label="Rewards">
+        <button class="nav-btn" id="nav-rewards" onclick="showTab('rewards')" aria-label="Rewards">
             <span class="ni">🏆</span><span class="nl">Rewards</span>
         </button>
     </nav>
@@ -653,6 +767,16 @@ GAME_SECTIONS.forEach(s => s.games.forEach(g => { GAME_NAMES[g.mode] = g.name; }
         </button>
     `;
     hub.appendChild(storiesBlock);
+
+    // Footer
+    const footer = document.createElement('footer');
+    footer.className = 'site-footer';
+    footer.innerHTML = `
+        <a href="parents.html">👨‍👩‍👧 Parent Guide</a>
+        <a href="privacy.html">🔒 Privacy Policy</a>
+        <a href="https://github.com/shiv-km/alaina-world" target="_blank" rel="noopener">⭐ GitHub</a>
+    `;
+    hub.appendChild(footer);
 })();
 
 // ═══════════════════════════════════════════════
@@ -767,6 +891,135 @@ document.getElementById('profile-modal').addEventListener('click', function(e) {
 function scrollToHubTop() { document.getElementById('hub').scrollTo({ top: 0, behavior: 'smooth' }); }
 function goStories()       { window.location.href = 'storybook.html'; }
 function goColoring()      { window.location.href = 'coloring.html'; }
+
+// ── Tab switching ─────────────────────────────
+let activeTab = 'hub';
+function showTab(tab) {
+    activeTab = tab;
+    const hubEl      = document.getElementById('hub');
+    const rewardsEl  = document.getElementById('rewards-screen');
+    const navGames   = document.getElementById('nav-games');
+    const navRewards = document.getElementById('nav-rewards');
+    if (tab === 'hub') {
+        hubEl.style.display     = '';
+        rewardsEl.classList.remove('active');
+        navGames.classList.add('on');
+        navRewards.classList.remove('on');
+        scrollToHubTop();
+    } else {
+        hubEl.style.display     = 'none';
+        rewardsEl.classList.add('active');
+        navGames.classList.remove('on');
+        navRewards.classList.add('on');
+        buildRewards();
+    }
+}
+
+// ── Rewards screen ────────────────────────────
+const UNLOCK_COST   = 50;
+const DAILY_BONUS   = 5;
+const PREMIUM_THEMES = [
+    { idx: 4, e: '🦕🌋🌿', n: 'Dinosaurs',     bg: '#27ae60' },
+    { idx: 5, e: '🐄🌾🐔', n: 'Farm Friends',   bg: '#d35400' },
+    { idx: 6, e: '🦋🌸🐝', n: 'Garden Friends', bg: '#16a085' },
+    { idx: 7, e: '🐼🎋🦜', n: 'Jungle Pals',    bg: '#2c3e50' },
+];
+const MILESTONES = [
+    { stars: 10,  icon: '🌱', label: 'First Steps' },
+    { stars: 25,  icon: '🌟', label: 'Star Collector' },
+    { stars: 50,  icon: '🏆', label: 'Super Player' },
+    { stars: 100, icon: '👑', label: 'Legend' },
+];
+
+function isThemeUnlocked(i) {
+    return localStorage.getItem('aw_unlock_ct_' + i) === '1';
+}
+
+function unlockTheme(i) {
+    if (isThemeUnlocked(i)) { showToast('Already unlocked! 🎉'); return; }
+    if (totalStars < UNLOCK_COST) {
+        showToast(`Need ${UNLOCK_COST} ⭐ to unlock! (you have ${totalStars})`);
+        return;
+    }
+    totalStars -= UNLOCK_COST;
+    localStorage.setItem('aw_stars', totalStars);
+    localStorage.setItem('aw_unlock_ct_' + i, '1');
+    updateStarsDisplay();
+    showToast('🎨 Theme unlocked! Open Coloring Studio to use it!');
+    buildRewards();
+}
+
+function claimDaily() {
+    const today = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem('aw_daily_bonus_date') === today) return;
+    localStorage.setItem('aw_daily_bonus_date', today);
+    addStars(DAILY_BONUS);
+    buildRewards();
+}
+
+function buildRewards() {
+    const el = document.getElementById('rewards-screen');
+    const today = new Date().toISOString().slice(0, 10);
+    const claimedToday = localStorage.getItem('aw_daily_bonus_date') === today;
+
+    let html = `
+        <section class="rw-hero" aria-label="Stars">
+            <h2>⭐ Your Stars</h2>
+            <span class="rw-stars-big">${totalStars}</span>
+            <p class="rw-sub">Play games to earn more stars!</p>
+        </section>
+
+        <div class="rw-section">
+            <h3>🎁 Daily Bonus</h3>
+            <div class="daily-card">
+                <span class="daily-icon">🌅</span>
+                <div class="daily-text">
+                    <h4>Come back every day!</h4>
+                    <p>${claimedToday ? 'Claimed today — come back tomorrow!' : 'Claim your daily +5 stars'}</p>
+                </div>
+                <button class="daily-btn" ${claimedToday ? 'disabled' : ''} onclick="claimDaily()">+${DAILY_BONUS} ⭐</button>
+            </div>
+        </div>
+
+        <div class="rw-section">
+            <h3>🏅 Milestones</h3>
+            <div class="milestone-row">
+    `;
+
+    MILESTONES.forEach(m => {
+        const earned = totalStars >= m.stars;
+        html += `
+            <div class="milestone-badge${earned ? ' earned' : ''}">
+                <span class="mb-icon">${m.icon}</span>
+                <span class="mb-val">${m.stars} ⭐</span>
+                <span class="mb-lbl">${m.label}</span>
+            </div>
+        `;
+    });
+
+    html += `</div></div>
+        <div class="rw-section" style="padding-bottom:10px">
+            <h3>🎨 Unlock Coloring Themes</h3>
+            <p style="font-size:0.78rem;color:var(--muted);font-weight:600;margin-bottom:10px">Spend ${UNLOCK_COST} stars to unlock premium coloring themes</p>
+            <div class="unlock-grid">
+    `;
+
+    PREMIUM_THEMES.forEach(t => {
+        const unlocked = isThemeUnlocked(t.idx);
+        html += `
+            <button class="unlock-card${unlocked ? '' : ' locked-theme'}" onclick="unlockTheme(${t.idx})" aria-label="${t.n} — ${unlocked ? 'unlocked' : UNLOCK_COST + ' stars to unlock'}">
+                <div class="uc-art" style="background:${t.bg}">${t.e}</div>
+                <div class="uc-body">
+                    <div class="uc-name">${t.n}</div>
+                    <div class="uc-cost${unlocked ? ' done' : ''}">${unlocked ? '✅ Unlocked' : '🔒 ' + UNLOCK_COST + ' ⭐'}</div>
+                </div>
+            </button>
+        `;
+    });
+
+    html += `</div></div>`;
+    el.innerHTML = html;
+}
 
 // ═══════════════════════════════════════════════
 //  DOM REFS
