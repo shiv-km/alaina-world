@@ -11,17 +11,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #FFF8F0;
-    --purple: #7C5CBF;
+    --bg: #1a0e2e;
+    --bg2: #251540;
+    --purple: #9b72ef;
     --pink:   #FF6B9D;
     --yellow: #FFC83D;
-    --text:   #2D1B69;
-    --muted:  #8B7CAB;
-    --border: rgba(124,92,191,0.12);
-    --shadow-sm: 0 2px 10px rgba(45,27,105,0.09);
-    --shadow-md: 0 8px 28px rgba(45,27,105,0.14);
+    --text:   #fff;
+    --muted:  #b0a0d0;
+    --border: rgba(155,114,239,0.18);
+    --shadow-sm: 0 4px 16px rgba(0,0,0,0.35);
+    --shadow-md: 0 12px 40px rgba(0,0,0,0.5);
+    --shadow-book: 6px 6px 30px rgba(0,0,0,0.6), -2px 0 0 rgba(0,0,0,0.2);
     --safe-t: env(safe-area-inset-top, 0px);
     --safe-b: env(safe-area-inset-bottom, 0px);
+    --page-bg: #fffdf6;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body {
@@ -30,140 +33,320 @@
     color: var(--text);
     min-height: 100vh;
     overflow-x: hidden;
+    background-image: radial-gradient(ellipse at 20% 10%, rgba(155,114,239,0.18) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 90%, rgba(255,107,157,0.12) 0%, transparent 60%);
   }
   button { font-family: inherit; }
 
   /* ── Page header ── */
   .page-header {
     position: sticky; top: 0; z-index: 50;
-    background: rgba(255,248,240,0.94);
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1.5px solid var(--border);
+    background: rgba(26,14,46,0.92);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
     display: flex; align-items: center; justify-content: space-between;
-    padding: calc(var(--safe-t) + 12px) 16px 12px;
+    padding: calc(var(--safe-t) + 12px) 20px 12px;
     gap: 10px;
   }
   .ph-logo {
     font-family: 'Fredoka One', sans-serif;
-    font-size: 1.3rem; color: var(--purple);
+    font-size: 1.3rem; color: #fff;
+    display: flex; align-items: center; gap: 6px;
   }
   .ph-logo em { font-style: normal; color: var(--pink); }
   .back-home {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 8px 16px;
-    background: linear-gradient(135deg, var(--purple), var(--pink));
+    background: rgba(155,114,239,0.2);
+    border: 1.5px solid rgba(155,114,239,0.4);
     border-radius: 100px;
     font-size: 0.82rem; font-weight: 800; color: #fff;
-    cursor: pointer; text-decoration: none; border: none;
-    box-shadow: var(--shadow-sm);
-    transition: transform 0.15s, box-shadow 0.15s;
+    cursor: pointer; text-decoration: none;
+    transition: background 0.15s, transform 0.15s;
     white-space: nowrap;
   }
-  .back-home:active { transform: scale(0.93); box-shadow: none; }
+  .back-home:hover { background: rgba(155,114,239,0.35); }
+  .back-home:active { transform: scale(0.93); }
 
   /* ── Library screen ── */
   #library {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 24px 14px calc(var(--safe-b) + 40px);
+    padding: 32px 16px calc(var(--safe-b) + 48px);
   }
-  #library h1 {
-    font-family: 'Fredoka One', sans-serif;
-    font-size: clamp(1.8rem, 6vw, 3rem);
-    color: var(--purple);
-    margin-bottom: 4px;
+
+  /* Hero section */
+  .library-hero {
     text-align: center;
+    margin-bottom: 32px;
+    max-width: 600px;
   }
-  #library p.sub {
+  .library-hero .hero-badge {
+    display: inline-block;
+    background: rgba(155,114,239,0.2);
+    border: 1px solid rgba(155,114,239,0.4);
+    color: var(--purple);
+    border-radius: 100px;
+    padding: 5px 16px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .library-hero h1 {
+    font-family: 'Fredoka One', sans-serif;
+    font-size: clamp(2.2rem, 7vw, 3.6rem);
+    color: #fff;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+  .library-hero h1 span { color: var(--pink); }
+  .library-hero p {
     color: var(--muted);
-    font-size: 0.9rem;
+    font-size: clamp(0.9rem, 2.5vw, 1.05rem);
     font-weight: 600;
-    margin-bottom: 22px;
+    line-height: 1.6;
   }
-  .story-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+
+  /* Action banners */
+  .banner-row {
+    display: flex;
     gap: 12px;
     width: 100%;
-    max-width: 900px;
+    max-width: 720px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+  .ai-banner {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(102,126,234,0.15);
+    border: 1.5px solid rgba(102,126,234,0.3);
+    color: #fff;
+    border-radius: 20px;
+    padding: 14px 18px;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    transition: transform 0.12s, background 0.15s;
+  }
+  .ai-banner:hover { background: rgba(102,126,234,0.25); }
+  .ai-banner:active { transform: scale(0.97); }
+  .ai-banner .bicon  { font-size: 1.8rem; flex-shrink: 0; }
+  .ai-banner .btext  { flex: 1; }
+  .ai-banner .btext strong { display: block; font-size: 0.9rem; font-weight: 800; }
+  .ai-banner .btext span   { font-size: 0.78rem; opacity: 0.7; }
+  .ai-banner.on { background: rgba(17,153,142,0.2); border-color: rgba(17,153,142,0.4); }
+  .create-banner { background: rgba(246,79,89,0.15) !important; border-color: rgba(246,79,89,0.3) !important; }
+  .create-banner:hover { background: rgba(246,79,89,0.25) !important; }
+
+  /* Section label */
+  .section-label {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .section-label h2 {
+    font-family: 'Fredoka One', sans-serif;
+    font-size: 1.1rem;
+    color: var(--muted);
+    font-weight: normal;
+    white-space: nowrap;
+  }
+  .section-label hr {
+    flex: 1;
+    border: none;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Book-cover grid ── */
+  .story-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 720px;
   }
   .story-card {
-    border-radius: 20px;
-    padding: 18px 12px 14px;
+    border-radius: 12px;
     cursor: pointer;
     text-align: center;
-    box-shadow: var(--shadow-sm);
-    transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s;
     user-select: none;
     border: none;
     outline: none;
+    background: none;
+    padding: 0;
+    position: relative;
+    transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
   }
-  .story-card:hover { transform: translateY(-3px) scale(1.02); box-shadow: var(--shadow-md); }
-  .story-card:active { transform: scale(0.93); box-shadow: none; }
-  .story-card .cover-emoji {
-    font-size: 3.5rem;
-    line-height: 1.1;
+  .story-card:hover { transform: translateY(-6px) rotate(-1deg); }
+  .story-card:hover .card-shadow { transform: scaleX(0.85) translateY(8px); opacity: 0.5; }
+  .story-card:active { transform: scale(0.94); }
+
+  .card-cover {
+    border-radius: 10px 14px 14px 10px;
+    padding: 0;
+    aspect-ratio: 2/3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-book);
+  }
+  /* Book spine effect */
+  .card-cover::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 10px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 10px 0 0 10px;
+  }
+  /* Shine highlight */
+  .card-cover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .cover-emoji {
+    font-size: clamp(2.8rem, 8vw, 4rem);
+    line-height: 1;
     display: block;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35));
     margin-bottom: 10px;
-    filter: drop-shadow(0 3px 5px rgba(0,0,0,0.2));
+    position: relative;
+    z-index: 1;
   }
-  .story-card .story-title {
-    font-size: 0.82rem;
-    font-weight: 800;
+  .card-title-band {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(6px);
+    padding: 8px 10px 9px;
+    z-index: 2;
+  }
+  .story-title {
+    font-size: 0.72rem;
+    font-weight: 900;
     color: #fff;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.3);
-    line-height: 1.25;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+  }
+  .card-shadow {
+    height: 12px;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.4) 0%, transparent 70%);
+    border-radius: 50%;
+    margin: 0 8px;
+    transition: transform 0.22s, opacity 0.22s;
+    opacity: 0.3;
+  }
+  .custom-badge {
+    display: inline-block; background: linear-gradient(135deg,#667eea,#764ba2);
+    color: #fff; font-size: 0.55rem; font-weight: 800; padding: 2px 7px;
+    border-radius: 100px; margin-top: 3px;
+    position: absolute; top: 8px; right: 8px; z-index: 5;
   }
 
-  /* ── Story reader ── */
+  /* ── Story Reader ── */
   #reader {
     display: none;
     position: fixed;
     inset: 0;
     flex-direction: column;
-    background: #fff;
+    background: #0d0720;
     z-index: 100;
   }
   #reader.open { display: flex; }
 
-  /* Top bar */
+  /* Reader top bar */
   .reader-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 14px;
-    background: rgba(255,255,255,0.95);
-    border-bottom: 2px solid #f0f0f0;
+    padding: calc(var(--safe-t) + 10px) 16px 10px;
+    background: rgba(13,7,32,0.9);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
     flex-shrink: 0;
+    gap: 8px;
+    z-index: 10;
   }
   .reader-top .r-title {
-    font-size: clamp(0.85rem, 3.5vw, 1.1rem);
-    font-weight: bold;
-    color: #333;
+    font-size: clamp(0.8rem, 3vw, 1rem);
+    font-weight: 800;
+    color: rgba(255,255,255,0.85);
     text-align: center;
     flex: 1;
-  }
-  .top-btn {
-    padding: 8px 14px;
-    border: none;
-    border-radius: 14px;
-    font-weight: bold;
-    font-size: 0.85rem;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .top-btn.exit { background: #ff6b6b; color: #fff; }
-  .top-btn.pg   { background: #f0f0f0; color: #555; min-width: 60px; text-align: center; }
+  .top-btn {
+    padding: 7px 14px;
+    border: none;
+    border-radius: 100px;
+    font-weight: 800;
+    font-size: 0.82rem;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.12s, opacity 0.12s;
+  }
+  .top-btn:active { transform: scale(0.9); }
+  .top-btn.exit { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.15); }
+  .top-btn.pg   { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6); min-width: 64px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+  .top-btn.voice { background: rgba(162,155,254,0.2); color: #c9c4ff; border: 1px solid rgba(162,155,254,0.3); min-width: 42px; }
+  .top-btn.voice.reading { background: rgba(255,107,107,0.25); color: #ffaaaa; border-color: rgba(255,107,107,0.4); animation: voicePulse 1.2s ease infinite; }
+  @keyframes voicePulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
 
-  /* Scene */
-  .scene-wrap {
+  /* ── Book page container ── */
+  .book-stage {
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 16px 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  .book-page {
+    width: 100%;
+    max-width: 440px;
+    height: 100%;
+    max-height: 600px;
+    border-radius: 16px 20px 20px 16px;
+    background: var(--page-bg);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    position: relative;
+    box-shadow: var(--shadow-book), 0 0 0 1px rgba(0,0,0,0.1);
   }
+  /* Page spine */
+  .book-page::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 14px;
+    background: linear-gradient(to right, rgba(0,0,0,0.18), rgba(0,0,0,0.05) 60%, transparent);
+    z-index: 5;
+    pointer-events: none;
+    border-radius: 16px 0 0 16px;
+  }
+
+  /* Art fills top ~60% of the page */
   .scene-art {
     flex: 1;
     display: flex;
@@ -175,69 +358,146 @@
   }
   .art-inner {
     text-align: center;
-    padding: 10px;
+    padding: 16px;
     width: 100%;
     pointer-events: none;
+    position: relative;
+    z-index: 3;
   }
   .art-inner .big-scene {
-    font-size: clamp(4rem, 18vw, 9rem);
-    line-height: 1.1;
+    font-size: clamp(4.5rem, 20vw, 9rem);
+    line-height: 1;
     display: block;
-    animation: scenePop 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    animation: scenePop 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    filter: drop-shadow(0 6px 16px rgba(0,0,0,0.25));
   }
   @keyframes scenePop {
-    from { transform: scale(0.4) rotate(-8deg); opacity: 0; }
-    to   { transform: scale(1) rotate(0deg);   opacity: 1; }
+    from { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+    to   { transform: scale(1) rotate(0deg);     opacity: 1; }
   }
   .art-inner .scene-chars {
-    font-size: clamp(2.5rem, 10vw, 5.5rem);
+    font-size: clamp(2.8rem, 11vw, 5.5rem);
     display: block;
-    margin-top: 8px;
-    animation: slideUp 0.4s ease forwards;
+    margin-top: 10px;
+    animation: slideUp 0.45s ease forwards;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.2));
   }
   @keyframes slideUp {
-    from { transform: translateY(30px); opacity: 0; }
+    from { transform: translateY(24px); opacity: 0; }
     to   { transform: translateY(0);    opacity: 1; }
   }
 
-  /* Text box */
-  .story-text-box {
-    background: rgba(255,255,255,0.97);
-    border-top: 3px solid #f0f0f0;
-    padding: 14px 20px;
-    flex-shrink: 0;
-  }
-  .story-text-box p {
-    font-size: clamp(1rem, 3.5vw, 1.35rem);
-    color: #222;
-    line-height: 1.55;
-    text-align: center;
+  /* Decorative dots in art bg */
+  .scene-art .art-deco {
+    position: absolute;
+    inset: 0;
+    opacity: 0.35;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.5) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+    z-index: 1;
   }
 
-  /* Nav */
-  .reader-nav {
+  /* Text panel - parchment style */
+  .story-text-box {
+    background: #fffdf6;
+    border-top: 2px solid rgba(0,0,0,0.06);
+    padding: 16px 22px 18px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 4;
+    /* Parchment texture */
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 27px,
+        rgba(0,0,0,0.025) 27px,
+        rgba(0,0,0,0.025) 28px
+      );
+  }
+  .story-text-box p {
+    font-size: clamp(1rem, 3.2vw, 1.22rem);
+    color: #2a1840;
+    line-height: 1.65;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  /* Page number strip */
+  .page-dots {
     display: flex;
-    gap: 10px;
-    padding: 12px 16px;
-    background: rgba(255,255,255,0.98);
-    border-top: 2px solid #f0f0f0;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px calc(var(--safe-b) + 10px);
+    background: rgba(13,7,32,0.9);
     flex-shrink: 0;
   }
-  .nav-btn {
-    flex: 1;
-    padding: 14px 10px;
-    border: none;
-    border-radius: 18px;
-    font-size: clamp(1rem, 4vw, 1.2rem);
-    font-weight: bold;
+  .p-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    transition: all 0.2s;
     cursor: pointer;
-    transition: transform 0.12s;
+    border: none;
+    padding: 0;
+  }
+  .p-dot.active {
+    background: var(--purple);
+    width: 22px;
+    border-radius: 3px;
+    box-shadow: 0 0 8px rgba(155,114,239,0.6);
+  }
+
+  /* Nav arrows - floating on sides */
+  .reader-nav {
+    position: absolute;
+    top: 50%;
+    left: 0; right: 0;
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: space-between;
+    padding: 0 6px;
+    pointer-events: none;
+    z-index: 20;
+  }
+  .nav-btn {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(13,7,32,0.75);
+    color: #fff;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: all;
+    transition: transform 0.12s, background 0.15s, opacity 0.15s;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    backdrop-filter: blur(6px);
+    flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
   }
-  .nav-btn:active { transform: scale(0.95); }
-  .nav-btn.prev { background: #e0e0e0; color: #333; }
-  .nav-btn.next { background: #4ecdc4; color: #fff; }
-  .nav-btn:disabled { opacity: 0.3; cursor: default; }
+  .nav-btn:hover { background: rgba(155,114,239,0.6); }
+  .nav-btn:active { transform: scale(0.88); }
+  .nav-btn.next { background: rgba(155,114,239,0.5); }
+  .nav-btn:disabled { opacity: 0.18; cursor: default; pointer-events: none; }
+
+  /* Page-flip animation */
+  .book-page.flip-out {
+    animation: flipOut 0.3s ease-in forwards;
+  }
+  .book-page.flip-in {
+    animation: flipIn 0.35s ease-out forwards;
+  }
+  @keyframes flipOut {
+    0%   { transform: perspective(900px) rotateY(0deg); opacity: 1; }
+    100% { transform: perspective(900px) rotateY(-35deg); opacity: 0; }
+  }
+  @keyframes flipIn {
+    0%   { transform: perspective(900px) rotateY(35deg); opacity: 0; }
+    100% { transform: perspective(900px) rotateY(0deg); opacity: 1; }
+  }
 
   /* Page-end card */
   .end-card {
@@ -245,33 +505,43 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100%;
-    gap: 18px;
-    padding: 20px;
+    flex: 1;
+    gap: 16px;
+    padding: 24px 20px;
+    background: var(--page-bg);
   }
-  .end-card .end-emoji { font-size: 5rem; animation: scenePop 0.5s ease forwards; }
-  .end-card h2 { font-size: clamp(1.4rem, 5vw, 2rem); color: #ff6b6b; text-align: center; }
-  .end-card .moral {
-    background: #fff9d0;
-    border-left: 5px solid #ffd93d;
-    border-radius: 12px;
-    padding: 14px 18px;
-    font-size: clamp(0.95rem, 3vw, 1.15rem);
-    color: #555;
-    line-height: 1.5;
-    max-width: 480px;
+  .end-card .end-emoji { font-size: 4.5rem; animation: scenePop 0.5s ease forwards; }
+  .end-card h2 {
+    font-family: 'Fredoka One', sans-serif;
+    font-size: clamp(1.4rem, 5vw, 2rem);
+    color: #2a1840;
     text-align: center;
   }
+  .end-card .moral {
+    background: #fff9d0;
+    border: 2px solid #ffd93d;
+    border-radius: 14px;
+    padding: 14px 18px;
+    font-size: clamp(0.9rem, 2.8vw, 1.05rem);
+    color: #555;
+    line-height: 1.55;
+    max-width: 380px;
+    text-align: center;
+    font-weight: 700;
+  }
   .end-btn {
-    padding: 14px 32px;
-    background: #ff6b6b;
+    padding: 13px 32px;
+    background: linear-gradient(135deg, var(--purple), var(--pink));
     color: #fff;
     border: none;
-    border-radius: 22px;
-    font-size: 1.1rem;
-    font-weight: bold;
+    border-radius: 100px;
+    font-size: 1rem;
+    font-weight: 800;
     cursor: pointer;
+    box-shadow: 0 4px 16px rgba(155,114,239,0.4);
+    transition: transform 0.12s;
   }
+  .end-btn:active { transform: scale(0.94); }
 
   /* ── AI image overlay ── */
   .ai-photo {
@@ -283,27 +553,27 @@
     opacity: 0;
     transition: opacity 1.3s ease;
     z-index: 2;
-    border-radius: 0;
   }
   .ai-photo.loaded { opacity: 1; }
   .ai-badge {
     position: absolute;
     bottom: 10px;
-    right: 10px;
+    right: 12px;
     z-index: 10;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.55);
     color: #fff;
-    padding: 5px 13px;
+    padding: 5px 12px;
     border-radius: 20px;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     pointer-events: none;
     display: flex;
     align-items: center;
     gap: 6px;
     font-family: inherit;
+    backdrop-filter: blur(4px);
   }
   .ai-badge .dot {
-    width: 7px; height: 7px;
+    width: 6px; height: 6px;
     background: #4ecdc4;
     border-radius: 50%;
     animation: dotPulse 1s ease infinite;
@@ -311,74 +581,52 @@
   }
   @keyframes dotPulse { 0%,100%{opacity:0.3;transform:scale(0.7)} 50%{opacity:1;transform:scale(1.2)} }
 
-  /* ── AI banner in library ── */
-  .ai-banner {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: linear-gradient(135deg,#667eea,#764ba2);
-    color: #fff;
-    border-radius: 18px;
-    padding: 13px 18px;
-    margin-bottom: 20px;
-    cursor: pointer;
-    max-width: 480px;
-    width: 100%;
-    border: none;
-    font-family: inherit;
-    text-align: left;
-    box-shadow: 0 5px 18px rgba(102,126,234,0.35);
-    -webkit-tap-highlight-color: transparent;
-    transition: transform 0.12s;
-  }
-  .ai-banner:active { transform: scale(0.97); }
-  .ai-banner .bicon  { font-size: 1.7rem; flex-shrink: 0; }
-  .ai-banner .btext  { flex: 1; }
-  .ai-banner .btext strong { display: block; font-size: 0.97rem; }
-  .ai-banner .btext span   { font-size: 0.8rem; opacity: 0.88; }
-  .ai-banner.on { background: linear-gradient(135deg,#11998e,#38ef7d); color: #1a3a2a; }
-  .ai-banner.on .btext span { opacity: 0.75; }
-
   /* ── Settings modal ── */
   .modal-overlay {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.55);
+    background: rgba(0,0,0,0.7);
     display: flex; align-items: center; justify-content: center;
     z-index: 600;
     padding: 20px;
+    backdrop-filter: blur(4px);
   }
   .modal-overlay.hidden { display: none; }
   .modal-box {
-    background: #fff;
-    border-radius: 28px;
+    background: #1e1036;
+    border: 1px solid rgba(155,114,239,0.25);
+    border-radius: 24px;
     padding: 28px 22px 22px;
     max-width: 440px;
     width: 100%;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    color: #fff;
   }
-  .modal-box h2   { font-size: 1.35rem; color: #333; margin-bottom: 8px; }
-  .modal-box .mdesc { color: #666; font-size: 0.88rem; line-height: 1.5; margin-bottom: 14px; }
+  .modal-box h2   { font-size: 1.3rem; color: #fff; margin-bottom: 8px; }
+  .modal-box .mdesc { color: var(--muted); font-size: 0.87rem; line-height: 1.5; margin-bottom: 14px; }
   .modal-box input {
     width: 100%;
     padding: 12px 14px;
-    border: 2px solid #ddd;
-    border-radius: 14px;
+    border: 1.5px solid rgba(155,114,239,0.3);
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+    border-radius: 12px;
     font-size: 0.92rem;
     font-family: monospace;
     outline: none;
     display: block;
     margin-bottom: 6px;
   }
-  .modal-box input:focus { border-color: #667eea; }
+  .modal-box input:focus { border-color: var(--purple); }
+  .modal-box input::placeholder { color: rgba(255,255,255,0.3); }
   .show-hide-btn {
     background: none; border: none; cursor: pointer;
-    font-size: 0.78rem; color: #999; padding: 0 2px 12px;
+    font-size: 0.78rem; color: var(--muted); padding: 0 2px 12px;
     font-family: inherit;
   }
   .modal-note {
     font-size: 0.76rem;
-    color: #aaa;
-    background: #f7f7f7;
+    color: var(--muted);
+    background: rgba(255,255,255,0.05);
     border-radius: 10px;
     padding: 9px 12px;
     margin-bottom: 18px;
@@ -390,62 +638,59 @@
     min-width: 80px;
     padding: 12px 10px;
     border: none;
-    border-radius: 14px;
+    border-radius: 12px;
     font-size: 0.9rem;
-    font-weight: bold;
+    font-weight: 800;
     cursor: pointer;
     font-family: inherit;
     -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.12s, transform 0.12s;
   }
-  .btn-save   { background: #667eea; color: #fff; }
+  .modal-btns button:active { transform: scale(0.94); }
+  .btn-save   { background: var(--purple); color: #fff; }
   .btn-remove { background: #ff6b6b; color: #fff; }
-  .btn-cancel { background: #f0f0f0; color: #555; }
-
-  /* ── Voice narration button ── */
-  .top-btn.voice { background: #a29bfe; color: #fff; min-width: 44px; }
-  .top-btn.voice.reading { background: #ff6b6b; animation: voicePulse 1.2s ease infinite; }
-  @keyframes voicePulse { 0%,100%{opacity:1} 50%{opacity:0.65} }
+  .btn-cancel { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
 
   /* ── Create-story modal ── */
   .create-box { max-height: 88vh; overflow-y: auto; }
   .field-group { margin-bottom: 16px; }
-  .field-label { display: block; font-weight: 800; color: #444; margin-bottom: 7px; font-size: 0.86rem; letter-spacing: 0.02em; }
+  .field-label { display: block; font-weight: 800; color: var(--muted); margin-bottom: 7px; font-size: 0.84rem; letter-spacing: 0.04em; text-transform: uppercase; }
   .field-input {
-    width: 100%; padding: 11px 14px; border: 2px solid #ddd; border-radius: 14px;
+    width: 100%; padding: 11px 14px;
+    border: 1.5px solid rgba(155,114,239,0.3);
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+    border-radius: 12px;
     font-family: inherit; font-size: 0.95rem; outline: none;
   }
-  .field-input:focus { border-color: #667eea; }
+  .field-input::placeholder { color: rgba(255,255,255,0.3); }
+  .field-input:focus { border-color: var(--purple); }
   .picker-row { display: flex; flex-wrap: wrap; gap: 7px; }
   .picker-chip {
-    padding: 7px 13px; border-radius: 100px; border: 2px solid #ddd;
-    background: #fff; cursor: pointer; font-size: 0.88rem; font-weight: 700;
-    transition: all 0.14s; font-family: inherit; color: #333;
+    padding: 7px 13px; border-radius: 100px;
+    border: 1.5px solid rgba(155,114,239,0.25);
+    background: rgba(155,114,239,0.1);
+    cursor: pointer; font-size: 0.85rem; font-weight: 700;
+    transition: all 0.14s; font-family: inherit; color: rgba(255,255,255,0.75);
   }
-  .picker-chip.on { border-color: #667eea; background: #eef2ff; color: #4040cc; }
+  .picker-chip.on { border-color: var(--purple); background: rgba(155,114,239,0.25); color: #fff; }
   .picker-chip:active { transform: scale(0.92); }
   .create-cta {
-    width: 100%; padding: 14px; border: none; border-radius: 18px;
-    background: linear-gradient(135deg,#667eea,#764ba2);
+    width: 100%; padding: 14px; border: none; border-radius: 100px;
+    background: linear-gradient(135deg, var(--purple), var(--pink));
     color: #fff; font-size: 1rem; font-weight: 800;
     cursor: pointer; margin-bottom: 8px; font-family: inherit;
-    transition: opacity 0.15s;
+    transition: opacity 0.15s, transform 0.12s;
+    box-shadow: 0 4px 16px rgba(155,114,239,0.4);
   }
-  .create-cta:disabled { opacity: 0.55; cursor: default; }
+  .create-cta:active { transform: scale(0.97); }
+  .create-cta:disabled { opacity: 0.45; cursor: default; }
   .modal-spinner {
-    width: 46px; height: 46px; border: 5px solid #f0f0f0;
-    border-top-color: #667eea; border-radius: 50%;
+    width: 46px; height: 46px; border: 4px solid rgba(255,255,255,0.1);
+    border-top-color: var(--purple); border-radius: 50%;
     animation: spin 0.8s linear infinite; margin: 0 auto 14px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .custom-badge {
-    display: inline-block; background: linear-gradient(135deg,#667eea,#764ba2);
-    color: #fff; font-size: 0.58rem; font-weight: 800; padding: 2px 7px;
-    border-radius: 100px; margin-top: 4px; vertical-align: middle;
-  }
-  .create-banner {
-    background: linear-gradient(135deg,#764ba2,#f64f59) !important;
-    margin-bottom: 12px;
-  }
 
   /* Confetti burst on end */
   .confetti-piece {
@@ -466,30 +711,41 @@
 
 <!-- ── Page Header ── -->
 <header class="page-header">
-  <div class="ph-logo">🌟 <em>Alaina's</em> World</div>
-  <a href="index.html" class="back-home">🏠 Back to Games</a>
+  <div class="ph-logo">📖 <em>Alaina's</em> World</div>
+  <a href="index.html" class="back-home">🏠 Home</a>
 </header>
 
 <!-- ── Library ── -->
 <div id="library">
-  <h1>📖 Story Time!</h1>
-  <p class="sub">Choose a story to read</p>
-  <button class="ai-banner" id="aiBanner" onclick="openSettings()">
-    <span class="bicon" id="bannerIcon">🎨</span>
-    <div class="btext">
-      <strong id="bannerTitle">Enable AI Illustrations</strong>
-      <span id="bannerSub">Add your OpenAI key for beautiful AI art on every page</span>
-    </div>
-    <span>⚙️</span>
-  </button>
-  <button class="ai-banner create-banner" onclick="openCreate()">
-    <span class="bicon">✨</span>
-    <div class="btext">
-      <strong>Create My Own Story!</strong>
-      <span>AI writes a personalized story just for you</span>
-    </div>
-    <span>→</span>
-  </button>
+  <div class="library-hero">
+    <div class="hero-badge">✨ 15 Classic Stories</div>
+    <h1>Story <span>Time</span> 📖</h1>
+    <p>Pick a book and dive into a magical adventure.<br>Listen, read, and explore classic tales!</p>
+  </div>
+
+  <div class="banner-row">
+    <button class="ai-banner" id="aiBanner" onclick="openSettings()">
+      <span class="bicon" id="bannerIcon">🎨</span>
+      <div class="btext">
+        <strong id="bannerTitle">AI Illustrations</strong>
+        <span id="bannerSub">Add OpenAI key for art on every page</span>
+      </div>
+      <span style="opacity:0.5">⚙️</span>
+    </button>
+    <button class="ai-banner create-banner" onclick="openCreate()">
+      <span class="bicon">✨</span>
+      <div class="btext">
+        <strong>Create My Story</strong>
+        <span>AI writes a story just for you</span>
+      </div>
+      <span style="opacity:0.5">→</span>
+    </button>
+  </div>
+
+  <div class="section-label">
+    <h2>📚 Choose a Story</h2>
+    <hr>
+  </div>
   <div class="story-grid" id="storyGrid"></div>
 </div>
 
@@ -548,19 +804,28 @@
 <!-- ── Reader ── -->
 <div id="reader">
   <div class="reader-top">
-    <button class="top-btn exit" onclick="closeReader()">✕ Stories</button>
+    <button class="top-btn exit" onclick="closeReader()">← Stories</button>
     <span class="r-title" id="readerTitle"></span>
-    <button class="top-btn pg"   id="pageCounter"></button>
+    <button class="top-btn pg"    id="pageCounter"></button>
     <button class="top-btn voice" id="voiceBtn" onclick="toggleVoice()" title="Read to me">🔊</button>
   </div>
-  <div class="scene-wrap">
-    <div class="scene-art" id="sceneArt"></div>
-    <div class="story-text-box" id="textBox"></div>
+
+  <div class="book-stage">
+    <!-- floating nav arrows -->
+    <div class="reader-nav">
+      <button class="nav-btn prev" id="prevBtn" onclick="changePage(-1)">◀</button>
+      <button class="nav-btn next" id="nextBtn" onclick="changePage(1)">▶</button>
+    </div>
+
+    <!-- The book page -->
+    <div class="book-page" id="bookPage">
+      <div class="scene-art" id="sceneArt"></div>
+      <div class="story-text-box" id="textBox"></div>
+    </div>
   </div>
-  <div class="reader-nav">
-    <button class="nav-btn prev" id="prevBtn" onclick="changePage(-1)">◀ Back</button>
-    <button class="nav-btn next" id="nextBtn" onclick="changePage(1)">Next ▶</button>
-  </div>
+
+  <!-- Page progress dots -->
+  <div class="page-dots" id="pageDots"></div>
 </div>
 
 <script>
@@ -845,7 +1110,6 @@ const STORIES = [
 //  BUILD LIBRARY
 // ═══════════════════════════════════════════════════════
 const grid = document.getElementById('storyGrid');
-const bgPattern = 'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.2) 0%, transparent 50%)';
 let customStories = [];
 try { customStories = JSON.parse(localStorage.getItem('aw_custom_stories') || '[]'); } catch(e) {}
 
@@ -854,11 +1118,14 @@ function buildLibrary() {
   STORIES.forEach((story, i) => {
     const card = document.createElement('button');
     card.className = 'story-card';
-    card.style.background = story.cardColor;
-    card.style.backgroundImage = bgPattern;
     card.innerHTML = `
-      <span class="cover-emoji">${story.cover}</span>
-      <div class="story-title">${story.title}</div>
+      <div class="card-cover" style="background:${story.bg}">
+        <span class="cover-emoji">${story.cover}</span>
+        <div class="card-title-band">
+          <div class="story-title">${story.title}</div>
+        </div>
+      </div>
+      <div class="card-shadow"></div>
     `;
     card.addEventListener('click', () => openStory(story));
     grid.appendChild(card);
@@ -866,12 +1133,15 @@ function buildLibrary() {
   customStories.forEach(story => {
     const card = document.createElement('button');
     card.className = 'story-card';
-    card.style.background = story.cardColor || '#667eea';
-    card.style.backgroundImage = bgPattern;
     card.innerHTML = `
-      <span class="cover-emoji">${story.cover}</span>
-      <div class="story-title">${story.title}</div>
-      <span class="custom-badge">✨ My Story</span>
+      <div class="card-cover" style="background:${story.bg || story.cardColor || '#667eea'}">
+        <span class="cover-emoji">${story.cover}</span>
+        <div class="card-title-band">
+          <div class="story-title">${story.title}</div>
+        </div>
+        <span class="custom-badge">✨ Mine</span>
+      </div>
+      <div class="card-shadow"></div>
     `;
     card.addEventListener('click', () => openStory(story));
     grid.appendChild(card);
@@ -892,7 +1162,21 @@ function openStory(storyOrIdx) {
   document.getElementById('readerTitle').textContent = activeStory.title;
   const reader = document.getElementById('reader');
   reader.classList.add('open');
+  buildPageDots();
   renderPage();
+}
+
+function buildPageDots() {
+  const dots = document.getElementById('pageDots');
+  dots.innerHTML = '';
+  const total = activeStory.pages.length;
+  for (let i = 0; i <= total; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'p-dot' + (i === 0 ? ' active' : '');
+    btn.setAttribute('aria-label', `Page ${i + 1}`);
+    btn.addEventListener('click', () => { currentPage = i; renderPage(); });
+    dots.appendChild(btn);
+  }
 }
 
 function closeReader() {
@@ -906,8 +1190,25 @@ function changePage(dir) {
   const total = activeStory.pages.length;
   if (dir === 1 && currentPage === total) return;
   if (dir === -1 && currentPage === 0) return;
-  currentPage += dir;
-  renderPage();
+
+  // Page flip animation
+  const bookPage = document.getElementById('bookPage');
+  bookPage.classList.add('flip-out');
+  setTimeout(() => {
+    bookPage.classList.remove('flip-out');
+    currentPage += dir;
+    renderPage();
+    bookPage.classList.add('flip-in');
+    setTimeout(() => bookPage.classList.remove('flip-in'), 380);
+  }, 280);
+}
+
+function updateDots() {
+  const dots = document.getElementById('pageDots');
+  if (!dots) return;
+  dots.querySelectorAll('.p-dot').forEach((d, i) => {
+    d.classList.toggle('active', i === currentPage);
+  });
 }
 
 function renderPage() {
@@ -920,6 +1221,7 @@ function renderPage() {
   const pageCounter = document.getElementById('pageCounter');
 
   prevBtn.disabled = currentPage === 0;
+  updateDots();
 
   if (currentPage === total) {
     // End card
@@ -929,6 +1231,7 @@ function renderPage() {
 
     sceneArt.style.background = story.bg;
     sceneArt.innerHTML = `
+      <div class="art-deco"></div>
       <div class="end-card">
         <span class="end-emoji">🎉</span>
         <h2>The End!</h2>
@@ -943,34 +1246,27 @@ function renderPage() {
   const page = story.pages[currentPage];
   pageCounter.textContent = `${currentPage + 1} / ${total}`;
   nextBtn.disabled = false;
-  nextBtn.textContent = currentPage === total - 1 ? 'Finish 🎉' : 'Next ▶';
-  if (currentPage === total - 1) {
-    nextBtn.style.background = '#ff6b6b';
-  } else {
-    nextBtn.style.background = '#4ecdc4';
-  }
+  nextBtn.textContent = currentPage === total - 1 ? '🎉' : '▶';
+  nextBtn.style.background = currentPage === total - 1
+    ? 'rgba(255,107,107,0.55)'
+    : 'rgba(155,114,239,0.5)';
 
   textBox.style.display = '';
   sceneArt.style.background = story.bg;
   sceneArt.innerHTML = `
+    <div class="art-deco"></div>
     <div class="art-inner">
-      <span class="big-scene" style="animation-delay:0s">${page.art}</span>
-      <span class="scene-chars" style="animation-delay:0.15s">${page.chars}</span>
+      <span class="big-scene">${page.art}</span>
+      <span class="scene-chars">${page.chars}</span>
     </div>
   `;
   textBox.innerHTML = `<p>${page.text}</p>`;
 
-  // Re-trigger animations
-  void sceneArt.querySelector('.big-scene').offsetWidth;
-  void sceneArt.querySelector('.scene-chars').offsetWidth;
-
   // ── AI image layer ──────────────────────────────────────
   const ck = imgCacheKey(story.id, currentPage);
   if (imageCache.has(ck)) {
-    // Already generated this session — show it right away
     setTimeout(() => showAiImage(sceneArt, imageCache.get(ck)), 80);
   } else if (loadApiKey()) {
-    // Show loading badge and kick off generation
     const badge = document.createElement('div');
     badge.className = 'ai-badge';
     badge.innerHTML = '<div class="dot"></div> Generating art…';
@@ -1299,7 +1595,7 @@ document.getElementById('reader').addEventListener('touchstart', e => {
 }, { passive: true });
 document.getElementById('reader').addEventListener('touchend', e => {
   const dx = e.changedTouches[0].clientX - touchStartX;
-  if (Math.abs(dx) > 60) changePage(dx < 0 ? 1 : -1);
+  if (Math.abs(dx) > 55) changePage(dx < 0 ? 1 : -1);
 }, { passive: true });
 </script>
 </body>
