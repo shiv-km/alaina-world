@@ -64,6 +64,7 @@
     cursor: pointer; text-decoration: none;
     transition: background 0.15s, transform 0.15s;
     white-space: nowrap;
+    min-height: 40px;
   }
   .back-home:hover { background: rgba(155,114,239,0.35); }
   .back-home:active { transform: scale(0.93); }
@@ -303,6 +304,7 @@
     white-space: nowrap;
     -webkit-tap-highlight-color: transparent;
     transition: transform 0.12s, opacity 0.12s;
+    min-height: 40px;
   }
   .top-btn:active { transform: scale(0.9); }
   .top-btn.exit { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.15); }
@@ -463,7 +465,7 @@
     z-index: 20;
   }
   .nav-btn {
-    width: 44px; height: 44px;
+    width: 46px; height: 46px;
     border-radius: 50%;
     border: none;
     background: rgba(13,7,32,0.75);
@@ -704,6 +706,85 @@
   @keyframes confettiFall {
     0%   { transform: translateY(0) rotate(0deg);   opacity: 1; }
     100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  @media (max-width: 420px) {
+    .page-header {
+      padding: calc(var(--safe-t) + 10px) 12px 10px;
+    }
+    .ph-logo { font-size: 1.08rem; }
+    .back-home { padding: 7px 12px; font-size: 0.76rem; }
+
+    #library { padding: 20px 12px calc(var(--safe-b) + 34px); }
+    .library-hero { margin-bottom: 22px; }
+    .library-hero .hero-badge { font-size: 0.68rem; padding: 4px 12px; }
+    .library-hero h1 { font-size: clamp(1.8rem, 9vw, 2.3rem); }
+    .library-hero p { font-size: 0.84rem; }
+
+    .banner-row { gap: 10px; margin-bottom: 20px; }
+    .ai-banner {
+      min-width: 0;
+      width: 100%;
+      padding: 11px 13px;
+      border-radius: 16px;
+    }
+    .ai-banner .btext strong { font-size: 0.84rem; }
+    .ai-banner .btext span { font-size: 0.72rem; }
+
+    .section-label { margin-bottom: 12px; }
+    .section-label h2 { font-size: 0.95rem; }
+
+    .story-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .story-title { font-size: 0.66rem; }
+
+    .reader-top {
+      padding: calc(var(--safe-t) + 8px) 8px 8px;
+      gap: 6px;
+    }
+    .reader-top .r-title { font-size: 0.76rem; }
+    .top-btn { padding: 6px 10px; font-size: 0.74rem; min-height: 36px; }
+    .top-btn.pg { min-width: 54px; }
+
+    .book-stage { padding: 10px 8px 6px; }
+    .book-page {
+      max-width: none;
+      max-height: none;
+      border-radius: 12px 16px 16px 12px;
+    }
+    .reader-nav { padding: 0 2px; }
+    .nav-btn { width: 40px; height: 40px; font-size: 1rem; }
+
+    .story-text-box { padding: 12px 14px 14px; }
+    .story-text-box p { font-size: 0.94rem; line-height: 1.52; }
+    .page-dots { padding: 8px 12px calc(var(--safe-b) + 8px); }
+
+    .modal-overlay { padding: 12px; }
+    .modal-box {
+      border-radius: 18px;
+      padding: 18px 14px 14px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    #library { padding: 34px 24px calc(var(--safe-b) + 48px); }
+    .banner-row,
+    .section-label,
+    .story-grid { max-width: 980px; }
+    .story-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+
+    .book-stage { padding: 24px 28px 10px; }
+    .book-page {
+      max-width: 560px;
+      max-height: 720px;
+    }
+    .reader-nav { padding: 0 18px; }
+  }
+
+  @media (min-width: 1100px) {
+    .story-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
   }
 </style>
 </head>
